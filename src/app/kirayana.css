@@ -1,0 +1,10 @@
+/* Only requested product placement and organizer-specific form additions.
+   Canvas rendering, dimensions and controls come from the source styles. */
+.canvas-header { left: auto; }
+.canvas-header .canvas-brand { font-size: 17px; }
+.kirayana-loading { min-height: 100dvh; display: grid; place-content: center; text-align: center; background: #0b1220; }
+.kirayana-storage-note { padding: 8px 12px; margin: 0; max-width: 220px; color: var(--muted); font-size: 11px; }
+.kirayana-palette { display: flex; gap: 8px; margin: 16px 0; }
+.kirayana-palette button { width: 25px; height: 25px; padding: 0 !important; border: 2px solid transparent !important; border-radius: 50% !important; background: var(--swatch) !important; }
+.kirayana-palette button[aria-pressed='true'] { border-color: var(--text) !important; }
+.ui-form-dialog input[type='color'] { width: 100%; min-height: 38px; padding: 4px; }

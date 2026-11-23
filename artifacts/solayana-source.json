@@ -1,0 +1,17 @@
+{
+  "sourceRepository": "solayana",
+  "revision": "d844ca831f21504af3a122406b5c8afa8c64464f",
+  "files": {
+    "canvasCamera.ts": "5c4f3ec50594620a77dc150437cf76d208e64b21516c84970aae1fca365f9439",
+    "canvasDepth.ts": "21a41779588926a8fe911f4b1f2e1ee31ae2bbf7ed9bee30a675733cbba986f4",
+    "canvasInspector.ts": "5ed9a8e93bd57effaba7c04a0b0fe50b9148740e3659273ae015146b2837b2c3",
+    "CanvasDetailWindow.tsx": "f4034999df8cb0dbb705b4f115b1ff29b98162b12c7a78eda47ce2e34b3dc6ed",
+    "CanvasWorkspace.css": "01de4c17d4ce3d074ce8403545a8df9edc84ed2b991b27420504705f6474a0c6",
+    "canvasCamera.test.ts": "ebea43ad0e6c8c52b7b23b2f6d62e6a08b0f0642393eb1ff87a3c876e769dd4b",
+    "canvasInspector.test.ts": "b69fef2c1d98b7df028bbf751b445b82dae161b508c94e2332783dd66754254e",
+    "CanvasWorkspace.tsx": "5431f80d99f6b60953901afca0249fe06eb9681889e160c6449be1b06050a357",
+    "CanvasRightFlyout.tsx": "8be73772c0adc58ccbfce462be57227ad7d83f7b9e9344e26fe52c7e9fbf6531",
+    "style.css": "3b72758eebcf208f80607327a128fa9945e3278caf5e023b98e697d359630d82",
+    "ui/Controls.tsx": "84f4f3cc03886892757d6110bc1440c32baaf703ae806104d30640b2ab32e7cb"
+  }
+}
