@@ -1,4 +1,4 @@
-import { assertOrganizer } from '../organizer/model'
+import { assertOrganizer, migrateOrganizer } from '../organizer/model'
 import type { OrganizerRepository } from './repository'
 
 /** IndexedDB snapshot commits are atomic, including local attachment Blobs. */
@@ -21,7 +21,7 @@ export function createLocalRepository(): OrganizerRepository {
         const request = transaction.objectStore('organizer').get('current')
         request.onerror = () => reject(request.error)
         request.onsuccess = () => {
-          try { const state = request.result; if (state) { assertOrganizer(state); revision = state.revision }; resolve(state ?? null) }
+          try { const state = request.result ? migrateOrganizer(request.result) : null; if (state) revision = state.revision; resolve(state) }
           catch (error) { reject(error) }
         }
       })

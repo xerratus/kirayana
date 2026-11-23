@@ -11,7 +11,7 @@ npm run dev
 
 Open http://localhost:5180. No Docker, Supabase, or AI credentials required. Dark mode is the default.
 
-## Phase 1
+## Local canvas
 
 - Local user hub and collapsed Skills orb.
 - Right-click to add, rename, recolor, expand/collapse, or enter an entity.
@@ -47,4 +47,14 @@ node scripts/browser-smoke.mjs
 
 `src/canvas` preserves source drawing routines and shared panel/camera geometry. `src/organizer` defines generic records and validation. `src/storage` exposes an async repository backed by IndexedDB. Branding lives in `src/app/brand.ts`. Supabase and a server-side shared OpenAI key are later phases; never put an AI key in a Vite variable.
 
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and [artifacts/PHASE_1.md](artifacts/PHASE_1.md).
+## Phase 2 organizer features
+
+Right-click a user/entity hub to create a List/detail collection, Subset, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
+
+Subsets reuse the source fan and curved connector. Add entities to a Subset, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fan entity to expand its hub, or double-click to enter its canvas. Nested entities can contain their own lists, subsets, and items. Context menus support validated moves and prevent cycles.
+
+Items hold notes and inherit their parent entity's color. Unsaved record/item edits are protected when closing or switching the flyout. Snapshot schema v1 migrates to v2 on load without replacing IDs or layout. Skill editing, action discovery, Supabase, and AI remain later phases.
+
+Phase 2 UI smoke checks: `node scripts/browser-phase2.mjs` (same optional Playwright setup as above).
+
+See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and [artifacts/PHASE_1.md](artifacts/PHASE_1.md), and [artifacts/PHASE_2.md](artifacts/PHASE_2.md).

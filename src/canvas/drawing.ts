@@ -106,4 +106,3 @@ export function drawProjectCone(ctx: CanvasRenderingContext2D, source: Point, ta
   ctx.stroke()
   ctx.restore()
 }
-

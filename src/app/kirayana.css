@@ -8,3 +8,19 @@
 .kirayana-palette button { width: 25px; height: 25px; padding: 0 !important; border: 2px solid transparent !important; border-radius: 50% !important; background: var(--swatch) !important; }
 .kirayana-palette button[aria-pressed='true'] { border-color: var(--text) !important; }
 .ui-form-dialog input[type='color'] { width: 100%; min-height: 38px; padding: 4px; }
+.kirayana-inline-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.kirayana-data-form { display: grid; gap: 16px; }
+.kirayana-data-form input:not([type='checkbox']), .kirayana-data-form textarea, .kirayana-data-form select { width: 100%; }
+.kirayana-data-form textarea { min-height: 90px; resize: vertical; }
+.kirayana-check { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+.kirayana-check input { width: auto; }
+.kirayana-field-list { display: grid; gap: 8px; margin-top: 16px; }
+.kirayana-field-list > div { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.kirayana-field-list strong, .kirayana-field-list small { display: block; }
+.kirayana-field-list small { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.kirayana-record-summary { margin: 0; display: grid; gap: 14px; }
+.kirayana-record-summary dt { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.kirayana-record-summary dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.kirayana-item-preview { white-space: pre-wrap; }
+.canvas-orb-nav:focus-within { max-height: calc(100dvh - 180px); overflow-y: auto; }
+.canvas-orb-nav > span { display: contents; }

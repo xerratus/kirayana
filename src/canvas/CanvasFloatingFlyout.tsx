@@ -22,4 +22,3 @@ export function CanvasFloatingFlyoutFrame({ open, color, label, children }: { op
     {open && children}
   </aside>
 }
-

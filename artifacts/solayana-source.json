@@ -12,6 +12,12 @@
     "CanvasWorkspace.tsx": "5431f80d99f6b60953901afca0249fe06eb9681889e160c6449be1b06050a357",
     "CanvasRightFlyout.tsx": "8be73772c0adc58ccbfce462be57227ad7d83f7b9e9344e26fe52c7e9fbf6531",
     "style.css": "3b72758eebcf208f80607327a128fa9945e3278caf5e023b98e697d359630d82",
-    "ui/Controls.tsx": "84f4f3cc03886892757d6110bc1440c32baaf703ae806104d30640b2ab32e7cb"
+    "ui/Controls.tsx": "84f4f3cc03886892757d6110bc1440c32baaf703ae806104d30640b2ab32e7cb",
+    "CanvasDetailList.tsx": "22e01b2932f276240f57676dad797d32f7dfa66a0ec065de0ef81874ce5809f9",
+    "canvasDetailListFilter.ts": "0ad2be9e1da397b580222fe5096d39af6bfb0ab1b257c40fde5986767bb43529",
+    "ui/ConfirmDialog.tsx": "6f116ef3bd0047e6ea8416c17e750fb01b9dc634e25849676c49c118557521ae",
+    "ui/ConfirmationProvider.tsx": "a6348eabfdfa765ffe10ec6731dc2c72f60e8486b88df0526e3fe9e028635cc7",
+    "ui/confirmationContext.ts": "9eb7c053bbb03bc030f4e0dd62d1db53a708b225d41097df10d078c0994738ba",
+    "ui/confirmationPolicy.ts": "e6c6516d2a63a48c5e7faa33dd0ffd114a048fdb948f7399d0991caed7b45953"
   }
 }

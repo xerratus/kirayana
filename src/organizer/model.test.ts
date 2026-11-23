@@ -33,6 +33,6 @@ describe('local organizer invariants', () => {
     expect(() => assertOrganizer(missing)).toThrow('Missing')
     const camera = structuredClone(state); camera.views[state.rootId].camera.zoom = NaN
     expect(() => assertOrganizer(camera)).toThrow('camera')
-    expect(() => assertOrganizer({ ...state, schemaVersion: 2 })).toThrow('unsupported')
+    expect(() => assertOrganizer({ ...state, schemaVersion: 3 })).toThrow('unsupported')
   })
 })

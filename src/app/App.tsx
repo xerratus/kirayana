@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { brand } from './brand'
 import { CanvasWorkspace } from '../canvas/CanvasWorkspace'
 import { initialOrganizer, type Organizer } from '../organizer/model'
 import { createLocalRepository } from '../storage/indexedDb'
@@ -39,5 +40,5 @@ export function App() {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [status])
-  return state ? <CanvasWorkspace state={state} change={change} storageStatus={status} storageError={error} /> : <main className="kirayana-loading" role={error ? 'alert' : 'status'}><h1>Kirayana</h1><p>{error || status}</p>{error && <button type="button" onClick={() => location.reload()}>Retry</button>}</main>
+  return state ? <CanvasWorkspace state={state} change={change} storageStatus={status} storageError={error} /> : <main className="kirayana-loading" role={error ? 'alert' : 'status'}><h1>{brand.name}</h1><p>{error || status}</p>{error && <button type="button" onClick={() => location.reload()}>Retry</button>}</main>
 }
