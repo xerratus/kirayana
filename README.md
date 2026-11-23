@@ -68,3 +68,5 @@ Open **Skills → Manage skills** to add a name, unique slash command, descripti
 **Export backup** includes nested content, fields, records, skills, layout, colors, and attachment bytes. **Import backup** validates the file and previews replacement. Export your current data before confirming replacement. File limits: 10 MB each, 25 MB total; backup limit: 40 MB. Import preserves IDs and does not merge organizers.
 
 Phase 3 browser checks: `node scripts/browser-phase3.mjs`. See [artifacts/PHASE_3.md](artifacts/PHASE_3.md).
+
+Subsets define shared fields at creation (Name is always required). Set a singular item label, such as “website” for Websites, to customize Add actions. Edit fields from the Subset’s context menu or detail panel. Each entity stores its own values; schema renames preserve them, and incompatible changes/deletion require confirmation. Nested canvases remain available inside those entities.

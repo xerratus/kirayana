@@ -1,6 +1,6 @@
 /* Only requested product placement and organizer-specific form additions.
    Canvas rendering, dimensions and controls come from the source styles. */
-.canvas-header { left: auto; }
+.canvas-header { right: auto; }
 .canvas-header .canvas-brand { font-size: 17px; }
 .kirayana-loading { min-height: 100dvh; display: grid; place-content: center; text-align: center; background: #0b1220; }
 .kirayana-storage-note { padding: 8px 12px; margin: 0; max-width: 220px; color: var(--muted); font-size: 11px; }
@@ -27,3 +27,33 @@
 .kirayana-action-link { display: block; width: 100%; text-align: left; background: transparent !important; border: 0 !important; color: var(--text); padding: 9px 0 !important; }
 .kirayana-action-link:hover { color: #72b5ff; }
 .kirayana-action-link small { display: block; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+
+/* Organizer controls must not inherit the source inspector's row layout. */
+.canvas-inspector-list > .kirayana-inline-actions {
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border-top: 0;
+}
+.canvas-inspector-list > .kirayana-inline-actions > .ui-button { flex: 0 0 auto; }
+.canvas-inspector-list > .ui-button + p,
+.canvas-inspector-list > p + .ui-button { margin-top: 12px; }
+
+/* The legacy button selector has higher specificity than a plain swatch rule. */
+.kirayana-palette { flex-wrap: wrap; }
+.kirayana-palette > button {
+  flex: 0 0 25px;
+  width: 25px !important;
+  min-width: 25px;
+  height: 25px;
+  min-height: 25px;
+}
+.kirayana-menu-separator { height: 1px; margin: 5px 0; background: var(--border); }
+.canvas-orb-menu .kirayana-menu-delete svg { color: var(--ui-danger); }
+.canvas-orb-menu .kirayana-menu-delete:hover,
+.canvas-orb-menu .kirayana-menu-delete:focus-visible { color: var(--ui-danger) !important; }
+.kirayana-schema-field { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.canvas-detail-row > .ui-icon-action-danger { opacity: 0; pointer-events: none; transition: opacity 120ms ease; }
+.canvas-detail-row:hover > .ui-icon-action-danger,
+.canvas-detail-row > .ui-icon-action-danger:focus-visible { opacity: 1; pointer-events: auto; }

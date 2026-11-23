@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
-import { ChevronRight, Pencil, X } from 'lucide-react'
+import { ChevronRight, Copy, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { UiIconButton } from '../ui/Controls'
 import { organicDetailPosition, detailPanelSide, type CanvasBounds, panelConnector, type DetailPanelSide, type PanelConnectorSide } from './canvasInspector'
 import { depthAtScreen } from './canvasDepth'
@@ -27,7 +27,7 @@ function useAnimatedDepth(target: number) {
   return value.current
 }
 
-export function CanvasDetailWindow({ title, subtitle, color, active, restored = false, position, cone, scale, baseScale, viewport, canvasViewKey, children, subDetail, source, subSide, subPosition, getObstacles, placementKey, panelKind = 'list', onOpen, onEditItem, onClose, onActivate, onMove, onMoveSub, onMeasure }: {
+export function CanvasDetailWindow({ title, subtitle, color, active, restored = false, position, cone, scale, baseScale, viewport, canvasViewKey, children, subDetail, source, subSide, subPosition, getObstacles, placementKey, panelKind = 'list', onAdd, onEdit, onDuplicate, duplicateLabel, onOpen, onEditItem, onDelete, onDeleteItem, onClose, onActivate, onMove, onMoveSub, onMeasure }: {
   title: string
   subtitle: string
   color: string
@@ -40,7 +40,7 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
   viewport: Size
   canvasViewKey: string
   children: ReactNode
-  subDetail?: { title: string; subtitle: string; content: ReactNode; onClose: () => void; onOpen?: () => void }
+  subDetail?: { title: string; subtitle: string; content: ReactNode; onClose: () => void; onOpen?: () => void; onDelete?: () => void }
   getObstacles?: (exclude?: Element | string) => CanvasBounds[]
   placementKey?: string
   source?: Point
@@ -48,7 +48,13 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
   subPosition?: Point
   panelKind?: 'list' | 'detail'
   onClose: () => void
+  duplicateLabel?: string
+  onDuplicate?: () => void
+  onAdd?: () => void
+  onEdit?: () => void
   onOpen?: () => void
+  onDelete?: () => void
+  onDeleteItem?: (id: string) => void
   onEditItem?: (id: string) => void
   onActivate: () => void
   onMove: (point: Point) => void
@@ -199,19 +205,23 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
     {connector && <svg className={`canvas-inspector-cone canvas-inspector-sub-line${restored ? ' is-restored' : ''}`} aria-hidden="true" style={{ color }}><g transform={`translate(${position.x} ${position.y}) scale(${scale})`}><path d={connector.path} /></g></svg>}
     <aside ref={windowRef} data-placement-key={placementKey} className={`canvas-inspector${active ? ' is-active' : ''}${restored ? ' is-restored' : ''}`} style={{ left: position.x, top: position.y, transform: `scale(${scale})`, '--orb-color': color } as CSSProperties} aria-label={`${title} details`} onContextMenu={contextMenu} onPointerDownCapture={event => { if (!(event.target as HTMLElement).closest('.canvas-flyout-open')) onActivate() }} onDoubleClick={event => { if (onOpen && !(event.target as HTMLElement).closest('.canvas-inspector-sub, button, a, input, textarea, select')) onOpen() }}>
       <div className="canvas-inspector-head" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
-        <div><h2>{title}</h2><p>{subtitle}</p></div><div className="canvas-inspector-sub-actions">{onOpen && <UiIconButton label={`Open ${title} in side panel`} variant="secondary" className="canvas-flyout-open" onClick={onOpen}><ChevronRight size={18} /></UiIconButton>}<UiIconButton label={`Close ${title} details`} variant="secondary" onClick={onClose}><X size={18} /></UiIconButton></div>
+        <div><h2>{title}</h2><p>{subtitle}</p></div><div className="canvas-inspector-sub-actions">{onEdit && <UiIconButton label={`Edit ${title} fields`} onClick={onEdit}><Pencil size={18} /></UiIconButton>}{onAdd && <UiIconButton label={`Add record to ${title}`} onClick={onAdd}><Plus size={18} /></UiIconButton>}{onOpen && !onAdd && <UiIconButton label={`Open ${title} in side panel`} variant="secondary" className="canvas-flyout-open" onClick={onOpen}><ChevronRight size={18} /></UiIconButton>}{onDelete && <UiIconButton label={`Delete ${title}`} variant="danger" onClick={onDelete}><Trash2 size={18} /></UiIconButton>}<UiIconButton label={`Close ${title} details`} variant="secondary" onClick={onClose}><X size={18} /></UiIconButton></div>
       </div>
       <div className="canvas-inspector-list">{children}</div>
       {menu && !menu.inSub && <div className="canvas-orb-menu canvas-inspector-context-menu" role="menu" style={{ left: menu.x, top: menu.y }}>
         {menu.kind === 'item' ? <button type="button" role="menuitem" onClick={() => menuAction(() => { const id = menu.row?.dataset.itemId; if (id) onEditItem?.(id) })}><Pencil size={15} />Edit</button> : <button type="button" role="menuitem" onClick={() => menuAction(onClose)}><X size={15} />Close</button>}
         {menu.kind === 'detail' && onOpen && <button type="button" role="menuitem" onClick={() => menuAction(onOpen)}><Pencil size={15} />Edit</button>}
+        {menu.kind !== 'item' && onDuplicate && <button type="button" role="menuitem" onClick={() => menuAction(onDuplicate)}><Copy size={15} />{duplicateLabel ?? 'Duplicate to all entities'}</button>}
+        {menu.kind === 'item' && onDeleteItem && <><div role="separator" className="kirayana-menu-separator" /><button className="kirayana-menu-delete" type="button" role="menuitem" onClick={() => menuAction(() => { const id = menu.row?.dataset.itemId; if (id) onDeleteItem(id) })}><Trash2 size={15} />Delete record</button></>}
+        {menu.kind !== 'item' && onDelete && <><div role="separator" className="kirayana-menu-separator" /><button className="kirayana-menu-delete" type="button" role="menuitem" onClick={() => menuAction(onDelete)}><Trash2 size={15} />Delete</button></>}
       </div>}
       {subDetail && <section ref={subRef} className={`canvas-inspector-sub${restored ? ' is-restored' : ''}`} style={{ left: subLeft, top: subTop, transform: `scale(${subScaleRatio})`, transformOrigin: 'top left' }} aria-label={`${subDetail.title} details`} onDoubleClick={event => { event.stopPropagation(); if (subDetail.onOpen && !(event.target as HTMLElement).closest('button, a, input, textarea, select')) subDetail.onOpen() }}>
-        <div className="canvas-inspector-sub-head" onPointerDown={subPointerDown} onPointerMove={subPointerMove} onPointerUp={subPointerUp} onPointerCancel={subPointerUp}><div><h3>{subDetail.title}</h3><p>{subDetail.subtitle}</p></div><div className="canvas-inspector-sub-actions">{subDetail.onOpen && <UiIconButton label={`Open ${subDetail.title} in side panel`} variant="secondary" className="canvas-flyout-open" onPointerDown={event => { if (event.button === 0) subDetail.onOpen?.() }} onClick={subDetail.onOpen}><ChevronRight size={18} /></UiIconButton>}<UiIconButton label={`Close ${subDetail.title} details`} variant="secondary" onClick={subDetail.onClose}><X size={18} /></UiIconButton></div></div>
+        <div className="canvas-inspector-sub-head" onPointerDown={subPointerDown} onPointerMove={subPointerMove} onPointerUp={subPointerUp} onPointerCancel={subPointerUp}><div><h3>{subDetail.title}</h3><p>{subDetail.subtitle}</p></div><div className="canvas-inspector-sub-actions">{subDetail.onOpen && <UiIconButton label={`Open ${subDetail.title} in side panel`} variant="secondary" className="canvas-flyout-open" onPointerDown={event => { if (event.button === 0) subDetail.onOpen?.() }} onClick={subDetail.onOpen}><ChevronRight size={18} /></UiIconButton>}{subDetail.onDelete && <UiIconButton label={`Delete ${subDetail.title}`} variant="danger" onClick={subDetail.onDelete}><Trash2 size={18} /></UiIconButton>}<UiIconButton label={`Close ${subDetail.title} details`} variant="secondary" onClick={subDetail.onClose}><X size={18} /></UiIconButton></div></div>
         <div className="canvas-inspector-sub-content">{subDetail.content}</div>
         {menu?.inSub && <div className="canvas-orb-menu canvas-inspector-context-menu" role="menu" style={{ left: menu.x, top: menu.y }}>
           <button type="button" role="menuitem" onClick={() => menuAction(subDetail.onClose)}><X size={15} />Close</button>
           {subDetail.onOpen && <button type="button" role="menuitem" onClick={() => menuAction(subDetail.onOpen!)}><Pencil size={15} />Edit</button>}
+          {subDetail.onDelete && <><div role="separator" className="kirayana-menu-separator" /><button className="kirayana-menu-delete" type="button" role="menuitem" onClick={() => menuAction(subDetail.onDelete!)}><Trash2 size={15} />Delete record</button></>}
         </div>}
       </section>}
     </aside>
