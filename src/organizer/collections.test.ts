@@ -56,6 +56,6 @@ describe('nested ownership and local migration',()=>{
   })
   it('migrates Phase 1 snapshots without changing identifiers or layout',()=>{
     const s=initialOrganizer();const old={...s,schemaVersion:1,fields:undefined,records:undefined,items:undefined}
-    const upgraded=migrateOrganizer(old);expect(upgraded.schemaVersion).toBe(2);expect(upgraded.rootId).toBe(s.rootId);expect(upgraded.nodes).toEqual(s.nodes);expect(upgraded.views).toEqual(s.views);expect(upgraded.fields).toEqual([])
+    const upgraded=migrateOrganizer(old);expect(upgraded.schemaVersion).toBe(3);expect(upgraded.rootId).toBe(s.rootId);expect(upgraded.nodes).toEqual(s.nodes);expect(upgraded.views).toEqual(s.views);expect(upgraded.fields).toEqual([])
   })
 })

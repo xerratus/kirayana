@@ -18,8 +18,8 @@ Open http://localhost:5180. No Docker, Supabase, or AI credentials required. Dar
 - Drag orbs; hold Command/Control to move descendants too. Drag empty space or use two fingers to pan. Pinch or Command/Control-scroll to zoom.
 - Click an expanded orb for details; click a small orb to expand. Double-click the main hub to collapse/expand children. Double-click an entity to enter its canvas.
 - Detail panels retain world positions during panning. The right-side flyout overlays the canvas.
-- Prompt, local file attachment, and response shell. AI is explicitly unavailable in this phase.
-- IndexedDB stores content, files, camera, layout, colors, and collapse state. The account menu exports a layout backup (file contents excluded).
+- Prompt with local slash actions, previews, confirmation, and file attachments. Hosted AI is not connected.
+- IndexedDB stores content, files, camera, layout, colors, and collapse state. The account menu exports and imports full backups, including file contents.
 
 Local storage is tied to browser and origin. Clearing site data removes it. There is no cloud sync or account authentication yet. A second tab cannot silently overwrite a newer saved revision.
 
@@ -53,8 +53,18 @@ Right-click a user/entity hub to create a List/detail collection, Subset, or Ite
 
 Subsets reuse the source fan and curved connector. Add entities to a Subset, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fan entity to expand its hub, or double-click to enter its canvas. Nested entities can contain their own lists, subsets, and items. Context menus support validated moves and prevent cycles.
 
-Items hold notes and inherit their parent entity's color. Unsaved record/item edits are protected when closing or switching the flyout. Snapshot schema v1 migrates to v2 on load without replacing IDs or layout. Skill editing, action discovery, Supabase, and AI remain later phases.
+Items hold notes and inherit their parent entity's color. Unsaved record/item edits are protected when closing or switching the flyout. Snapshot schemas v1 and v2 migrate to v3 on load without replacing IDs or layout. Supabase and hosted AI remain later phases.
 
 Phase 2 UI smoke checks: `node scripts/browser-phase2.mjs` (same optional Playwright setup as above).
 
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and [artifacts/PHASE_1.md](artifacts/PHASE_1.md), and [artifacts/PHASE_2.md](artifacts/PHASE_2.md).
+
+## Phase 3 actions, skills, and backups
+
+Type `/` for keyboard-accessible suggestions (arrows, Tab to insert), or choose **Your account → Browse actions**. Commands create entities, collections, subsets, and items; rename, recolor, move, expand/collapse orbs; add fields/records; and update Item notes. The directory shows syntax and orb IDs. Every command has a preview with Confirm/Cancel. Changes invalidate old previews; confirmation is single-use. Manual controls and commands use the same domain validation.
+
+Open **Skills → Manage skills** to add a name, unique slash command, description, instructions, enabled state, and optional entity scope. Instructions containing one local slash command can run now with the same preview. Other instructions are saved for the hosted AI phase; they are not executed as code or sent anywhere. Disabled/out-of-scope skills do not appear or run.
+
+**Export backup** includes nested content, fields, records, skills, layout, colors, and attachment bytes. **Import backup** validates the file and previews replacement. Export your current data before confirming replacement. File limits: 10 MB each, 25 MB total; backup limit: 40 MB. Import preserves IDs and does not merge organizers.
+
+Phase 3 browser checks: `node scripts/browser-phase3.mjs`. See [artifacts/PHASE_3.md](artifacts/PHASE_3.md).

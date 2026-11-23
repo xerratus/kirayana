@@ -1,6 +1,6 @@
 # Kirayana implementation plan
 
-Status: Phase 1 committed (`3b628a8`). Phase 2 implemented and validated locally; not committed. Phase 3 not started.
+Status: Phase 1 committed (`3b628a8`). Phase 2 committed (`30870c4`). Phase 3 complete; validation recorded in `artifacts/PHASE_3.md`. Phase 4 not started.
 
 ## Goal and fixed requirements
 

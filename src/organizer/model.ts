@@ -3,7 +3,8 @@ import { initialCamera, type Camera, type Point } from '../canvas/canvasCamera'
 export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item'; name: string; color: string; position: Point; collapsed: boolean; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
 export type View = { camera: Camera; panels: Record<string, Point>; openPanels: string[]; expandedEntities?: string[]; subPositions?: Record<string, Point>; selectedRecords?: Record<string, string> }
 export type LocalAttachment = { id: string; name: string; size: number; blob: Blob }
-export type Organizer = { schemaVersion: 2; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
+export type Organizer = { schemaVersion: 3; skills: Skill[]; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
+export type Skill = { id: string; name: string; command: string; description: string; instructions: string; enabled: boolean; version: number; scope: string | null }
 export type FieldType = 'text' | 'long-text' | 'number' | 'date' | 'checkbox' | 'select'
 export type Field = { id: string; collectionId: string; name: string; type: FieldType; required: boolean; options: string[] }
 export type FieldValue = string | number | boolean
@@ -12,7 +13,7 @@ export const palette = ['#4c9df4', '#41c7ae', '#f2ad58', '#a68cff', '#5ac3dc', '
 export const emptyView = (): View => ({ camera: structuredClone(initialCamera), panels: {}, openPanels: [] })
 export function initialOrganizer(): Organizer {
   const id = crypto.randomUUID(), time = new Date().toISOString()
-  return { schemaVersion: 2, fields: [], records: [], items: {}, revision: 0, rootId: id, viewId: id, nodes: [
+  return { schemaVersion: 3, skills: [], fields: [], records: [], items: {}, revision: 0, rootId: id, viewId: id, nodes: [
     { id, parentId: null, kind: 'user', name: 'You', color: palette[0], position: { x: 0, y: 0 }, collapsed: false, createdAt: time, updatedAt: time },
     { id: crypto.randomUUID(), parentId: id, kind: 'skills', name: 'Skills', color: '#b8a4ef', position: { x: 220, y: -160 }, collapsed: true, createdAt: time, updatedAt: time },
   ], views: { [id]: emptyView() }, attachments: [] }
@@ -45,9 +46,9 @@ export function addNode(state: Organizer, parentId: string, kind: 'entity' | 'co
 }
 export function assertOrganizer(value: unknown): asserts value is Organizer {
   const s = value as Organizer
-  if (!s || s.schemaVersion !== 2 || !Number.isInteger(s.revision) || !Array.isArray(s.nodes) || !s.views || !Array.isArray(s.attachments)) throw new Error('The saved organizer has an unsupported format. Your data has not been replaced.')
+  if (!s || s.schemaVersion !== 3 || !Number.isInteger(s.revision) || !Array.isArray(s.nodes) || !s.views || !Array.isArray(s.attachments)) throw new Error('The saved organizer has an unsupported format. Your data has not been replaced.')
   const root = s.nodes.find(n => n.id === s.rootId)
-  if (!root || root.kind !== 'user' || root.parentId !== null || !s.nodes.some(n => n.id === s.viewId) || new Set(s.nodes.map(n => n.id)).size !== s.nodes.length) throw new Error('The saved organizer is invalid. Your data has not been replaced.')
+  if (!root || root.kind !== 'user' || root.parentId !== null || !s.nodes.some(n => n.id === s.viewId && ['user','entity'].includes(n.kind)) || !s.views[s.viewId] || new Set(s.nodes.map(n => n.id)).size !== s.nodes.length) throw new Error('The saved organizer is invalid. Your data has not been replaced.')
   for (const node of s.nodes) {
     validateName(node.name); validateColor(node.color)
     if (!['user', 'entity', 'skills', 'collection', 'subset', 'item'].includes(node.kind) || !Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) throw new Error('Invalid saved entity.')
@@ -58,8 +59,16 @@ export function assertOrganizer(value: unknown): asserts value is Organizer {
     if (node.id !== s.rootId && (!owner || !['user','entity','subset'].includes(owner.kind) || (owner.kind === 'subset' && node.kind !== 'entity') || node.kind === 'user')) throw new Error('Invalid entity parent.')
   }
   if (!Array.isArray(s.fields) || !Array.isArray(s.records) || !s.items) throw new Error('Invalid organizer content.')
+  if (new Set(s.fields.map(f => f.id)).size !== s.fields.length || new Set(s.records.map(r => r.id)).size !== s.records.length) throw new Error('Duplicate content IDs.')
+  for (const field of s.fields) { validateName(field.name); if (!Array.isArray(field.options) || field.options.some(option => typeof option !== 'string') || typeof field.required !== 'boolean') throw new Error('Invalid field options.'); }
+  for (const [id, notes] of Object.entries(s.items)) if (typeof notes !== 'string' || !s.nodes.some(n => n.id === id && n.kind === 'item')) throw new Error('Invalid Item notes.')
   for (const field of s.fields) if (!s.nodes.some(n => n.id === field.collectionId && n.kind === 'collection') || !['text','long-text','number','date','checkbox','select'].includes(field.type)) throw new Error('Invalid collection field.')
-  for (const record of s.records) if (!s.nodes.some(n => n.id === record.collectionId && n.kind === 'collection')) throw new Error('Invalid collection record.')
+  for (const record of s.records) {
+    if (!Number.isInteger(record.revision) || record.revision < 1 || !record.values || !s.nodes.some(n => n.id === record.collectionId && n.kind === 'collection') || Object.keys(record.values).some(id => !s.fields.some(f => f.id === id && f.collectionId === record.collectionId))) throw new Error('Invalid collection record.')
+    saveRecord({ ...s, fields: s.fields.map(f => ({ ...f, required: false })) }, record.collectionId, record.values, record.id, record.revision)
+  }
+  if (!Array.isArray(s.skills) || new Set(s.skills.map(skill => skill.id)).size !== s.skills.length) throw new Error('Invalid skills.')
+  for (const skill of s.skills) validateSkill(s, skill)
   for (const view of Object.values(s.views)) {
     if (!view.camera || !Number.isFinite(view.camera.zoom) || view.camera.zoom < .5 || view.camera.zoom > 2 || !Number.isFinite(view.camera.pan.x) || !Number.isFinite(view.camera.pan.y) || !view.panels || !Array.isArray(view.openPanels)) throw new Error('Invalid saved camera.')
     for (const p of Object.values(view.panels)) if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) throw new Error('Invalid saved panel.')
@@ -69,7 +78,8 @@ export function assertOrganizer(value: unknown): asserts value is Organizer {
 /** Snapshot migration leaves the original stored data untouched until a valid save succeeds. */
 export function migrateOrganizer(value: unknown): Organizer {
   const old = value as { schemaVersion?: number }
-  const state = old?.schemaVersion === 1 ? { ...old, schemaVersion: 2, fields: [], records: [], items: {} } : old
+  const previous = old?.schemaVersion === 1 ? { ...old, schemaVersion: 3, skills: [], fields: [], records: [], items: {} } : old
+  const state = previous?.schemaVersion === 2 ? { ...previous, schemaVersion: 3, skills: [] } : previous
   assertOrganizer(state)
   return state
 }
@@ -122,4 +132,18 @@ export function moveNode(state: Organizer, id: string, parentId: string): Organi
   let ancestor: Node | undefined = parent
   while (ancestor) { if (ancestor.id === id) throw new Error('An entity cannot move inside itself.'); ancestor = state.nodes.find(n => n.id === ancestor!.parentId) }
   return { ...state, nodes: state.nodes.map(n => n.id === id ? { ...n, parentId } : n) }
+}
+
+export function validateSkill(state: Organizer, skill: Skill) {
+  validateName(skill.name)
+  if (!/^[a-z][a-z0-9-]{1,39}$/.test(skill.command) || typeof skill.instructions !== 'string' || skill.instructions.length > 20000 || typeof skill.description !== 'string' || skill.description.length > 500 || typeof skill.enabled !== 'boolean' || !Number.isInteger(skill.version) || skill.version < 1) throw new Error('Use a unique command with 2–40 lowercase letters, numbers, or hyphens. Instructions support up to 20,000 characters.')
+  if (skill.scope && !state.nodes.some(n => n.id === skill.scope && ['user','entity'].includes(n.kind))) throw new Error('Skill scope no longer exists.')
+  if (state.skills.some(s => s.id !== skill.id && s.command === skill.command)) throw new Error('A skill already uses this command.')
+}
+export function saveSkill(state: Organizer, skill: Skill): Organizer {
+  validateSkill(state, skill)
+  const old = state.skills.find(s => s.id === skill.id)
+  if (old && old.version !== skill.version) throw new Error('This skill changed. Reopen it before saving.')
+  const next = { ...skill, name: validateName(skill.name), version: (old?.version ?? 0) + 1 }
+  return { ...state, skills: old ? state.skills.map(s => s.id === next.id ? next : s) : [...state.skills, next] }
 }

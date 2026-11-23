@@ -24,3 +24,6 @@
 .kirayana-item-preview { white-space: pre-wrap; }
 .canvas-orb-nav:focus-within { max-height: calc(100dvh - 180px); overflow-y: auto; }
 .canvas-orb-nav > span { display: contents; }
+.kirayana-action-link { display: block; width: 100%; text-align: left; background: transparent !important; border: 0 !important; color: var(--text); padding: 9px 0 !important; }
+.kirayana-action-link:hover { color: #72b5ff; }
+.kirayana-action-link small { display: block; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
