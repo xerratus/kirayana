@@ -45,7 +45,7 @@ export function addNode(state: Organizer, parentId: string, kind: 'entity' | 'co
   const node: Node = { id: crypto.randomUUID(), parentId, kind, anchorAngle: kind === 'subset' ? -Math.PI / 3 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'subset').length * .8 : kind === 'item' ? Math.PI / 4 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'item').length * .7 : -Math.PI / 3, fanOpen: kind === 'subset', fanCollapsed: false, name: validateName(name), color: validateColor(color), position, collapsed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
   if (kind === 'subset') {
     const siblings = [...state.nodes.filter(n => n.kind === 'subset' && n.parentId === parentId), node]
-    if (siblings.length * defaultArcSpacing > Math.PI * 2) throw new Error('No room for another arc on this entity. Move a Subset to another entity first.')
+    if (siblings.length * defaultArcSpacing > Math.PI * 2) throw new Error('No room for another arc on this entity. Move a Group to another entity first.')
     const angles = pushArcAngles(siblings.map(n => ({ id: n.id, angle: n.anchorAngle ?? -Math.PI / 3 })), node.id, node.anchorAngle!)
     return { ...state, nodes: [...state.nodes, node].map(n => angles.has(n.id) ? { ...n, anchorAngle: angles.get(n.id)! } : n) }
   }
@@ -190,7 +190,7 @@ export function subsetItemLabel(node: Node) {
 }
 export function saveEntityValues(state: Organizer, id: string, values: Record<string, FieldValue>): Organizer {
   const node = state.nodes.find(n => n.id === id)
-  if (!node || node.kind !== 'entity' || !state.nodes.some(n => n.id === node.parentId && n.kind === 'subset')) throw new Error('Choose an entity inside a Subset.')
+  if (!node || node.kind !== 'entity' || !state.nodes.some(n => n.id === node.parentId && n.kind === 'subset')) throw new Error('Choose an entity inside a Group.')
   const clean = validateFieldValues(state.fields.filter(f => f.collectionId === node.parentId), values)
   return { ...state, nodes: state.nodes.map(n => n.id === id ? { ...n, values: clean, updatedAt: new Date().toISOString() } : n) }
 }

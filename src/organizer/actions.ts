@@ -2,8 +2,8 @@ import { avoidCanvasCollisions } from '../canvas/canvasInspector'
 import { addNode, updateNode, moveNode, addField, saveRecord, saveSkill, palette, type Organizer, type Field, type FieldValue, type Skill } from './model'
 export const actions = [
   { command: 'entity', hint: 'Name', description: 'Create an entity' },
-  { command: 'collection', hint: 'Name', description: 'Create a List/detail' },
-  { command: 'subset', hint: 'Name', description: 'Create a Subset' },
+  { command: 'collection', hint: 'Name', description: 'Create a Collection' },
+  { command: 'group', hint: 'Name', description: 'Create a Group' },
   { command: 'item', hint: 'Name', description: 'Create an Item' },
   { command: 'rename', hint: 'id New name', description: 'Rename an orb' },
   { command: 'color', hint: 'id #4c9df4', description: 'Change an orb color' },
@@ -23,7 +23,8 @@ export function discoverActions(query: string) {
 export function runAction(state: Organizer, input: string, parentId = state.viewId): Organizer {
   const match = /^\/([a-z-]+)\s*(.*)$/s.exec(input.trim())
   if (!match) throw new Error('Use / to browse local actions. AI is not connected yet; attached files have not been analyzed.')
-  const [, command, args] = match
+  const [, requestedCommand, args] = match
+  const command = requestedCommand === 'group' ? 'subset' : requestedCommand
   if (['entity','collection','subset','item'].includes(command)) {
     const parent = state.nodes.find(n => n.id === parentId)!
     const count = state.nodes.filter(n => n.parentId === parentId).length, angle = -Math.PI / 2 + count * .9

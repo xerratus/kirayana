@@ -49,9 +49,9 @@ node scripts/browser-smoke.mjs
 
 ## Phase 2 organizer features
 
-Right-click a user/entity hub to create a List/detail collection, Subset, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
+Right-click a user/entity hub to create a Collection, Group, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
 
-Subsets reuse the source fan and curved connector. Add entities to a Subset, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fan entity to expand its hub, or double-click to enter its canvas. Nested entities can contain their own lists, subsets, and items. Context menus support validated moves and prevent cycles.
+Groups reuse the source fan and curved connector. Add entities to a Group, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fan entity to expand its hub, or double-click to enter its canvas. Nested entities can contain their own lists, groups, and items. Context menus support validated moves and prevent cycles.
 
 Items hold notes and inherit their parent entity's color. Unsaved record/item edits are protected when closing or switching the flyout. Snapshot schemas v1 and v2 migrate to v3 on load without replacing IDs or layout. Supabase and hosted AI remain later phases.
 
@@ -61,7 +61,7 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) and [artifacts/PHASE_1.md](
 
 ## Phase 3 actions, skills, and backups
 
-Type `/` for keyboard-accessible suggestions (arrows, Tab to insert), or choose **Your account → Browse actions**. Commands create entities, collections, subsets, and items; rename, recolor, move, expand/collapse orbs; add fields/records; and update Item notes. The directory shows syntax and orb IDs. Every command has a preview with Confirm/Cancel. Changes invalidate old previews; confirmation is single-use. Manual controls and commands use the same domain validation.
+Type `/` for keyboard-accessible suggestions (arrows, Tab to insert), or choose **Your account → Browse actions**. Commands create entities, collections, groups, and items; rename, recolor, move, expand/collapse orbs; add fields/records; and update Item notes. The directory shows syntax and orb IDs. Every command has a preview with Confirm/Cancel. Changes invalidate old previews; confirmation is single-use. Manual controls and commands use the same domain validation.
 
 Open **Skills → Manage skills** to add a name, unique slash command, description, instructions, enabled state, and optional entity scope. Instructions containing one local slash command can run now with the same preview. Other instructions are saved for the hosted AI phase; they are not executed as code or sent anywhere. Disabled/out-of-scope skills do not appear or run.
 
@@ -69,4 +69,4 @@ Open **Skills → Manage skills** to add a name, unique slash command, descripti
 
 Phase 3 browser checks: `node scripts/browser-phase3.mjs`. See [artifacts/PHASE_3.md](artifacts/PHASE_3.md).
 
-Subsets define shared fields at creation (Name is always required). Set a singular item label, such as “website” for Websites, to customize Add actions. Edit fields from the Subset’s context menu or detail panel. Each entity stores its own values; schema renames preserve them, and incompatible changes/deletion require confirmation. Nested canvases remain available inside those entities.
+Groups define shared fields at creation (Name is always required). Set a singular item label, such as “website” for Websites, to customize Add actions. Edit fields from the Group’s context menu or detail panel. Each entity stores its own values; schema renames preserve them, and incompatible changes/deletion require confirmation. Nested canvases remain available inside those entities.

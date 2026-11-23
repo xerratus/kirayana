@@ -5,7 +5,7 @@ import { UiButton, UiIconButton } from '../ui/Controls'
 import { CanvasDetailList } from '../canvas/CanvasDetailList'
 import { addField, editField, removeField, saveRecord, type CollectionRecord, type Field, type FieldType, type FieldValue, type Node, type Organizer } from './model'
 export type Change = (update: (state: Organizer) => Organizer) => void
-export const kindLabel = (node: Node) => ({ user: 'Your organizer', entity: 'Entity', skills: 'Personal skills', collection: 'List/detail', subset: 'Subset', item: 'Item' })[node.kind]
+export const kindLabel = (node: Node) => ({ user: 'Your organizer', entity: 'Entity', skills: 'Personal skills', collection: 'Collection', subset: 'Group', item: 'Item' })[node.kind]
 export function recordTitle(state: Organizer, record: CollectionRecord) {
   const fields = state.fields.filter(f => f.collectionId === record.collectionId)
   const value = fields.map(f => record.values[f.id]).find(v => v !== undefined && v !== '')
@@ -16,7 +16,7 @@ export function RecordSummary({ state, record }: { state: Organizer; record: Col
 }
 export function CollectionList({ state, node, selectedId, onSelect, onDelete }: { state: Organizer; node: Node; selectedId?: string; onSelect: (id: string) => void; onDelete: (id: string) => void }) {
   const fields = state.fields.filter(f => f.collectionId === node.id)
-  return <><CanvasDetailList label={node.name.toLowerCase()} empty={fields.length ? 'No records yet.' : 'Add fields to define this list.'} selectedId={selectedId} onSelect={onSelect} onDelete={onDelete} items={state.records.filter(r => r.collectionId === node.id).map(record => ({ key: record.id, label: recordTitle(state, record), searchText: Object.values(record.values).join(' '), content: <><strong>{recordTitle(state, record)}</strong><small>{fields.slice(1).map(f => record.values[f.id]).filter(v => v !== undefined).join(' · ')}</small></> }))} /></>
+  return <><CanvasDetailList label={node.name.toLowerCase()} empty={fields.length ? 'No records yet.' : 'Add fields to define this collection.'} selectedId={selectedId} onSelect={onSelect} onDelete={onDelete} items={state.records.filter(r => r.collectionId === node.id).map(record => ({ key: record.id, label: recordTitle(state, record), searchText: Object.values(record.values).join(' '), content: <><strong>{recordTitle(state, record)}</strong><small>{fields.slice(1).map(f => record.values[f.id]).filter(v => v !== undefined).join(' · ')}</small></> }))} /></>
 }
 export function CollectionEditor({ state, node, change, recordId, onRecordSaved, onDirty }: { state: Organizer; node: Node; change: Change; recordId?: string | null; onRecordSaved: (id: string) => void; onDirty: (dirty: boolean) => void }) {
   const [fieldEdit, setFieldEdit] = useState<Field | 'new' | null>(null)

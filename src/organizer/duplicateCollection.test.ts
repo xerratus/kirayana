@@ -24,5 +24,5 @@ it('optionally copies records and remaps their field IDs; existing copies are ke
 })
 it('rejects source, duplicate, empty and unrelated targets', () => {
   const { s, list, reddit, solayana } = fixture()
-  for (const targets of [[], [reddit], [solayana, solayana], [s.rootId]]) expect(() => duplicateCollection(s, list, targets, false)).toThrow('same Subset')
+  for (const targets of [[], [reddit], [solayana, solayana], [s.rootId]]) expect(() => duplicateCollection(s, list, targets, false)).toThrow('same Group')
 })
