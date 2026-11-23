@@ -34,7 +34,7 @@ await keyClick('Expand Projects fan');await settle();assert.ok((await fan.boundi
 s=await state();const root=s.nodes.find(n=>n.id===s.rootId), camera=s.views[root.id].camera, center={x:720+camera.pan.x,y:480+camera.pan.y}, depth=1.079;const radius=117*depth;const angle=subset.anchorAngle
 await page.locator('canvas').focus();await page.mouse.move(center.x+Math.cos(angle)*radius,center.y+Math.sin(angle)*radius);await page.mouse.down();await page.mouse.move(center.x+Math.cos(angle+.5)*radius,center.y+Math.sin(angle+.5)*radius,{steps:12});await page.mouse.up();await settle();assert.ok(Math.abs((await state()).nodes.find(n=>n.id===subset.id).anchorAngle-angle)>.2)
 assert.deepEqual((await state()).nodes.find(n=>n.id===subset.id).position,subset.position)
-await keyClick('Enter Alpha canvas');await settle();assert.equal((await state()).viewId,alpha.id)
+await keyClick('Open Alpha canvas');await settle();assert.equal((await state()).viewId,alpha.id)
 await create('Collection','Tasks','Alpha');await create('Group','Phases','Alpha');await create('entity','Plan','Phases');await settle()
 await page.locator('canvas').focus();await page.screenshot({path:`${process.cwd()}/artifacts/phase-2-nested.png`})
 await page.reload();await settle();s=await state();assert.equal(s.viewId,alpha.id);assert.equal(s.records.length,1);assert.equal(s.items[item.id],'A personal note');assert.ok(s.nodes.some(n=>n.name==='Plan'))

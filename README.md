@@ -16,7 +16,7 @@ Open http://localhost:5180. No Docker, Supabase, or AI credentials required. Dar
 - Local user hub and collapsed Skills orb.
 - Right-click to add, rename, recolor, expand/collapse, or enter a space.
 - Drag orbs; hold Command/Control to move descendants too. Drag empty space or use two fingers to pan. Pinch or Command/Control-scroll to zoom.
-- Click an expanded orb for details; click a small orb to expand. Double-click the main hub to collapse/expand children. Double-click a space to enter its canvas.
+- Click an expanded orb for details; click a small orb to expand. Double-click the main hub to collapse/expand children. Double-click a Space to expand/collapse its orbs. Use Open [name] canvas in its right-click menu to enter.
 - Detail panels retain world positions during panning. The right-side flyout overlays the canvas.
 - Prompt with local slash actions, previews, confirmation, and file attachments. Hosted AI is not connected.
 - IndexedDB stores content, files, camera, layout, colors, and collapse state. The account menu exports and imports full backups, including file contents.
@@ -51,7 +51,7 @@ node scripts/browser-smoke.mjs
 
 Right-click a user/space hub to create a Collection, Group, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
 
-Groups reuse the source fan and curved connector. Add spaces to a Group, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fa space to expand its hub, or double-click to enter its canvas. Nested spaces can contain their own lists, groups, and items. Context menus support validated moves and prevent cycles.
+Groups reuse the source fan and curved connector. Add spaces to a Group, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fa space to expand its hub, or use its right-click Open canvas action to enter. Nested spaces can contain their own lists, groups, and items. Context menus support validated moves and prevent cycles.
 
 Items hold notes and inherit their parent space's color. Unsaved record/item edits are protected when closing or switching the flyout. Snapshot schemas v1 and v2 migrate to v3 on load without replacing IDs or layout. Supabase and hosted AI remain later phases.
 
