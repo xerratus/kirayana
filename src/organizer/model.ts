@@ -4,7 +4,7 @@ import { initialCamera, type Camera, type Point } from '../canvas/canvasCamera'
 export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item'; name: string; color: string; position: Point; collapsed: boolean; itemLabel?: string; values?: Record<string, FieldValue>; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
 export type View = { camera: Camera; panels: Record<string, Point>; openPanels: string[]; expandedEntities?: string[]; subPositions?: Record<string, Point>; selectedRecords?: Record<string, string> }
 export type LocalAttachment = { id: string; name: string; size: number; blob: Blob }
-export type Organizer = { schemaVersion: 3; skills: Skill[]; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
+export type Organizer = { completedFixtures?: string[]; schemaVersion: 3; skills: Skill[]; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
 export type Skill = { id: string; name: string; command: string; description: string; instructions: string; enabled: boolean; version: number; scope: string | null }
 export type FieldType = 'text' | 'long-text' | 'number' | 'date' | 'checkbox' | 'select'
 export type Field = { id: string; collectionId: string; name: string; type: FieldType; required: boolean; options: string[] }
@@ -29,7 +29,7 @@ export function validateColor(color: string) {
   return color
 }
 export function updateNode(state: Organizer, id: string, patch: Partial<Pick<Node, 'name' | 'color' | 'position' | 'collapsed'>>) {
-  if (!state.nodes.some(node => node.id === id)) throw new Error('This entity no longer exists.')
+  if (!state.nodes.some(node => node.id === id)) throw new Error('This space no longer exists.')
   if (patch.name !== undefined) patch = { ...patch, name: validateName(patch.name) }
   if (patch.color !== undefined) patch = { ...patch, color: validateColor(patch.color) }
   if (patch.position && (!Number.isFinite(patch.position.x) || !Number.isFinite(patch.position.y))) throw new Error('Invalid position.')
@@ -40,14 +40,22 @@ export function addEntity(state: Organizer, parentId: string, name: string, colo
 }
 export function addNode(state: Organizer, parentId: string, kind: 'entity' | 'collection' | 'subset' | 'item', name: string, color: string, position: Point): Organizer {
   const parent = state.nodes.find(node => node.id === parentId)
-  if (!parent || !['user','entity','subset'].includes(parent.kind) || (parent.kind === 'subset' && kind !== 'entity')) throw new Error('Choose an entity or user hub.')
+  if (!parent || !['user','entity','subset'].includes(parent.kind) || (parent.kind === 'subset' && kind !== 'entity')) throw new Error('Choose a space or user hub.')
   if (!['entity','collection','subset','item'].includes(kind)) throw new Error('Invalid branch type.')
   const node: Node = { id: crypto.randomUUID(), parentId, kind, anchorAngle: kind === 'subset' ? -Math.PI / 3 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'subset').length * .8 : kind === 'item' ? Math.PI / 4 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'item').length * .7 : -Math.PI / 3, fanOpen: kind === 'subset', fanCollapsed: false, name: validateName(name), color: validateColor(color), position, collapsed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
   if (kind === 'subset') {
     const siblings = [...state.nodes.filter(n => n.kind === 'subset' && n.parentId === parentId), node]
-    if (siblings.length * defaultArcSpacing > Math.PI * 2) throw new Error('No room for another arc on this entity. Move a Group to another entity first.')
+    if (siblings.length * defaultArcSpacing > Math.PI * 2) throw new Error('No room for another arc on this space. Move a Group to another space first.')
     const angles = pushArcAngles(siblings.map(n => ({ id: n.id, angle: n.anchorAngle ?? -Math.PI / 3 })), node.id, node.anchorAngle!)
-    return { ...state, nodes: [...state.nodes, node].map(n => angles.has(n.id) ? { ...n, anchorAngle: angles.get(n.id)! } : n) }
+    const angle = angles.get(node.id)!
+    let radius = Math.max(280, Math.hypot(position.x - parent.position.x, position.y - parent.position.y))
+    let aligned = { x: parent.position.x + Math.cos(angle) * radius, y: parent.position.y + Math.sin(angle) * radius }
+    // Search outward on the arc's ray, preserving its direction instead of shifting sideways.
+    while (state.nodes.some(n => Math.hypot(n.position.x - aligned.x, n.position.y - aligned.y) < (['user','entity'].includes(n.kind) ? 185 : 135))) {
+      radius += 200
+      aligned = { x: parent.position.x + Math.cos(angle) * radius, y: parent.position.y + Math.sin(angle) * radius }
+    }
+    return { ...state, nodes: [...state.nodes, { ...node, position: aligned }].map(n => angles.has(n.id) ? { ...n, anchorAngle: angles.get(n.id)! } : n) }
   }
   return { ...state, nodes: [...state.nodes, node] }
 }
@@ -60,12 +68,12 @@ export function assertOrganizer(value: unknown): asserts value is Organizer {
     validateName(node.name); validateColor(node.color)
     if (node.itemLabel !== undefined) validateName(node.itemLabel)
     if (node.values) validateFieldValues(s.fields.filter(f => f.collectionId === node.parentId).map(f => ({ ...f, required: false })), node.values)
-    if (!['user', 'entity', 'skills', 'collection', 'subset', 'item'].includes(node.kind) || !Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) throw new Error('Invalid saved entity.')
+    if (!['user', 'entity', 'skills', 'collection', 'subset', 'item'].includes(node.kind) || !Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) throw new Error('Invalid saved space.')
     const owner = node.parentId ? s.nodes.find(n => n.id === node.parentId) : undefined
     if (node.anchorAngle !== undefined && !Number.isFinite(node.anchorAngle)) throw new Error('Invalid anchor angle.')
     const visited = new Set([node.id]); let parent = node.parentId
-    while (parent) { if (visited.has(parent)) throw new Error('Circular entity relationship.'); visited.add(parent); const next = s.nodes.find(n => n.id === parent); if (!next) throw new Error('Missing entity parent.'); parent = next.parentId }
-    if (node.id !== s.rootId && (!owner || !['user','entity','subset'].includes(owner.kind) || (owner.kind === 'subset' && node.kind !== 'entity') || node.kind === 'user')) throw new Error('Invalid entity parent.')
+    while (parent) { if (visited.has(parent)) throw new Error('Circular space relationship.'); visited.add(parent); const next = s.nodes.find(n => n.id === parent); if (!next) throw new Error('Missing space parent.'); parent = next.parentId }
+    if (node.id !== s.rootId && (!owner || !['user','entity','subset'].includes(owner.kind) || (owner.kind === 'subset' && node.kind !== 'entity') || node.kind === 'user')) throw new Error('Invalid space parent.')
   }
   if (!Array.isArray(s.fields) || !Array.isArray(s.records) || !s.items) throw new Error('Invalid organizer content.')
   if (new Set(s.fields.map(f => f.id)).size !== s.fields.length || new Set(s.records.map(r => r.id)).size !== s.records.length) throw new Error('Duplicate content IDs.')
@@ -98,7 +106,7 @@ export function nodeColor(state: Organizer, node: Node): string {
 export function addField(state: Organizer, collectionId: string, field: Omit<Field, 'id' | 'collectionId'>): Organizer {
   if (!state.nodes.some(n => n.id === collectionId && ['collection','subset'].includes(n.kind))) throw new Error('Collection not found.')
   if (!['text','long-text','number','date','checkbox','select'].includes(field.type)) throw new Error('Invalid field type.')
-  if (state.nodes.some(n => n.id === collectionId && n.kind === 'subset') && field.name.trim().toLowerCase() === 'name') throw new Error('Name is already a required field for every entity.')
+  if (state.nodes.some(n => n.id === collectionId && n.kind === 'subset') && field.name.trim().toLowerCase() === 'name') throw new Error('Name is already a required field for every space.')
   const next = { ...field, name: validateName(field.name), options: field.options.map(v => v.trim()).filter(Boolean) }
   if (next.type === 'select' && !next.options.length) throw new Error('Add at least one option.')
   return { ...state, fields: [...state.fields, { ...next, id: crypto.randomUUID(), collectionId }] }
@@ -130,7 +138,7 @@ export function moveNode(state: Organizer, id: string, parentId: string): Organi
   const node = state.nodes.find(n => n.id === id), parent = state.nodes.find(n => n.id === parentId)
   if (!node || node.kind === 'user' || node.kind === 'skills' || !parent || !['user','entity','subset'].includes(parent.kind) || (parent.kind === 'subset' && node.kind !== 'entity')) throw new Error('Invalid destination.')
   let ancestor: Node | undefined = parent
-  while (ancestor) { if (ancestor.id === id) throw new Error('An entity cannot move inside itself.'); ancestor = state.nodes.find(n => n.id === ancestor!.parentId) }
+  while (ancestor) { if (ancestor.id === id) throw new Error('A space cannot move inside itself.'); ancestor = state.nodes.find(n => n.id === ancestor!.parentId) }
   return { ...state, nodes: state.nodes.map(n => n.id === id ? { ...n, parentId } : n) }
 }
 
@@ -183,14 +191,14 @@ export function validateFieldValues(fields: Field[], values: Record<string, Fiel
 }
 
 export function subsetItemLabel(node: Node) {
-  if (node.kind !== 'subset') return 'entity'
+  if (node.kind !== 'subset') return 'space'
   if (node.itemLabel) return node.itemLabel
   const name = node.name.trim().toLowerCase()
   return name.endsWith('ies') ? `${name.slice(0, -3)}y` : name.endsWith('s') && !name.endsWith('ss') ? name.slice(0, -1) : name
 }
 export function saveEntityValues(state: Organizer, id: string, values: Record<string, FieldValue>): Organizer {
   const node = state.nodes.find(n => n.id === id)
-  if (!node || node.kind !== 'entity' || !state.nodes.some(n => n.id === node.parentId && n.kind === 'subset')) throw new Error('Choose an entity inside a Group.')
+  if (!node || node.kind !== 'entity' || !state.nodes.some(n => n.id === node.parentId && n.kind === 'subset')) throw new Error('Choose a space inside a Group.')
   const clean = validateFieldValues(state.fields.filter(f => f.collectionId === node.parentId), values)
   return { ...state, nodes: state.nodes.map(n => n.id === id ? { ...n, values: clean, updatedAt: new Date().toISOString() } : n) }
 }

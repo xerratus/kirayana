@@ -42,7 +42,7 @@ describe('collections and schema evolution', () => {
   })
 })
 describe('nested ownership and local migration',()=>{
-  it('rejects cycles and invalid branch parents while allowing nested entity subsets',()=>{
+  it('rejects cycles and invalid branch parents while allowing nested space subsets',()=>{
     let s=initialOrganizer();s=addNode(s,s.rootId,'subset','Projects','#f2ad58',{x:200,y:0});const subset=s.nodes.at(-1)!.id
     s=addNode(s,subset,'entity','One','#41c7ae',{x:400,y:0});const entity=s.nodes.at(-1)!.id
     s=addNode(s,entity,'subset','Nested','#a68cff',{x:600,y:0});const nested=s.nodes.at(-1)!.id

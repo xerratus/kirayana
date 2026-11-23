@@ -211,7 +211,7 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
       {menu && !menu.inSub && <div className="canvas-orb-menu canvas-inspector-context-menu" role="menu" style={{ left: menu.x, top: menu.y }}>
         {menu.kind === 'item' ? <button type="button" role="menuitem" onClick={() => menuAction(() => { const id = menu.row?.dataset.itemId; if (id) onEditItem?.(id) })}><Pencil size={15} />Edit</button> : <button type="button" role="menuitem" onClick={() => menuAction(onClose)}><X size={15} />Close</button>}
         {menu.kind === 'detail' && onOpen && <button type="button" role="menuitem" onClick={() => menuAction(onOpen)}><Pencil size={15} />Edit</button>}
-        {menu.kind !== 'item' && onDuplicate && <button type="button" role="menuitem" onClick={() => menuAction(onDuplicate)}><Copy size={15} />{duplicateLabel ?? 'Duplicate to all entities'}</button>}
+        {menu.kind !== 'item' && onDuplicate && <button type="button" role="menuitem" onClick={() => menuAction(onDuplicate)}><Copy size={15} />{duplicateLabel ?? 'Duplicate to all spaces'}</button>}
         {menu.kind === 'item' && onDeleteItem && <><div role="separator" className="kirayana-menu-separator" /><button className="kirayana-menu-delete" type="button" role="menuitem" onClick={() => menuAction(() => { const id = menu.row?.dataset.itemId; if (id) onDeleteItem(id) })}><Trash2 size={15} />Delete record</button></>}
         {menu.kind !== 'item' && onDelete && <><div role="separator" className="kirayana-menu-separator" /><button className="kirayana-menu-delete" type="button" role="menuitem" onClick={() => menuAction(onDelete)}><Trash2 size={15} />Delete</button></>}
       </div>}

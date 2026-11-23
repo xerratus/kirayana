@@ -9,7 +9,7 @@ const state=()=>page.evaluate(()=>new Promise((resolve,reject)=>{const r=indexed
 await page.goto('http://127.0.0.1:5180');await settle()
 assert.equal((await state()).nodes.length,2)
 await page.mouse.click(720,480,{button:'right'});await page.getByRole('menuitem',{name:'Add entity',exact:true}).click()
-await page.getByRole('textbox',{name:'Name',exact:true}).fill('Work');await page.getByRole('button',{name:'Create entity',exact:true}).click();await settle()
+await page.getByRole('textbox',{name:'Name',exact:true}).fill('Work');await page.getByRole('button',{name:'Create space',exact:true}).click();await settle()
 let s=await state();assert.equal(s.nodes.length,3);const work=s.nodes.find(n=>n.name==='Work'), root=s.rootId
 // Edit through keyboard-accessible equivalent controls.
 await page.getByRole('button',{name:'Edit Work',exact:true}).focus();await page.keyboard.press('Enter')

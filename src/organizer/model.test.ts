@@ -9,7 +9,7 @@ describe('local organizer invariants', () => {
     expect(state.nodes[1].collapsed).toBe(true)
     expect(initialOrganizer().rootId).not.toBe(state.rootId)
   })
-  it('keeps parent links and identity when renaming or recoloring an entity', () => {
+  it('keeps parent links and identity when renaming or recoloring a space', () => {
     const state = initialOrganizer()
     const added = addEntity(state, state.rootId, ' Work ', '#f2ad58', { x: 220, y: 0 })
     const id = added.nodes[2].id

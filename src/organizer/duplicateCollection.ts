@@ -10,13 +10,13 @@ export function duplicateCollectionLabel(state: Organizer, collectionId: string)
   const list = state.nodes.find(n => n.id === collectionId)
   const owner = state.nodes.find(n => n.id === list?.parentId)
   const subset = state.nodes.find(n => n.id === owner?.parentId && n.kind === 'subset')
-  return `Duplicate to all ${subset?.name ?? 'entities'}`
+  return `Duplicate to all ${subset?.name ?? 'spaces'}`
 }
 /** Independent copies. Existing lists, values, and layouts are never overwritten. */
 export function duplicateCollection(state: Organizer, id: string, targetIds: string[], includeRecords: boolean): Organizer {
   const source = state.nodes.find(n => n.id === id && n.kind === 'collection')
   const allowed = new Set(collectionSiblings(state, id).map(n => n.id))
-  if (!source || !targetIds.length || new Set(targetIds).size !== targetIds.length || targetIds.some(id => !allowed.has(id))) throw new Error('Select other entities in the same Group.')
+  if (!source || !targetIds.length || new Set(targetIds).size !== targetIds.length || targetIds.some(id => !allowed.has(id))) throw new Error('Select other spaces in the same Group.')
   const owner = state.nodes.find(n => n.id === source.parentId)!
   const sourceFields = state.fields.filter(f => f.collectionId === id), sourceRecords = state.records.filter(r => r.collectionId === id)
   let result = state

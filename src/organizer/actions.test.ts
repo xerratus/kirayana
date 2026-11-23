@@ -6,19 +6,19 @@ describe('local actions and skills', () => {
   it('uses the same validation as manual domain operations', () => {
     const s = initialOrganizer(), command = runAction(s, '/collection Contacts')
     expect(command.nodes.at(-1)).toMatchObject({ name: 'Contacts', parentId: s.rootId, kind: 'collection' })
-    expect(() => runAction(s, '/entity ')).toThrow('name')
+    expect(() => runAction(s, '/space ')).toThrow('name')
     expect(() => addNode(s, s.rootId, 'entity', '', '#ffffff', { x: 0, y: 0 })).toThrow('name')
     expect(() => runAction(s, `/move ${s.rootId} ${s.rootId}`)).toThrow('destination')
   })
   it('previews without mutations and rejects stale and repeated confirmations', () => {
-    const s = initialOrganizer(), plan = previewAction(s, '/entity Work'), used = new Set<string>()
+    const s = initialOrganizer(), plan = previewAction(s, '/space Work'), used = new Set<string>()
     expect(s.nodes).toHaveLength(2)
     expect(() => applyPlan({ ...s, revision: 1 }, plan, used)).toThrow('changed')
     expect(applyPlan(s, plan, used).nodes).toHaveLength(3)
     expect(() => applyPlan(s, plan, used)).toThrow('already')
   })
   it('saves, scopes and versions skills', () => {
-    const s = initialOrganizer(), skill = { id: 'skill', name: 'Weekly plan', command: 'weekly', description: '', instructions: '/entity Week', enabled: true, version: 1, scope: null }
+    const s = initialOrganizer(), skill = { id: 'skill', name: 'Weekly plan', command: 'weekly', description: '', instructions: '/space Week', enabled: true, version: 1, scope: null }
     const saved = saveSkill(s, skill)
     expect(skillInScope(saved, saved.skills[0])).toBe(true)
     const edited = saveSkill(saved, { ...saved.skills[0], enabled: false })

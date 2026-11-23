@@ -13,17 +13,17 @@ Solayana Canvas is the visual and interaction source of truth. Port the existing
 Only requested product differences:
 
 - Main hub represents the current user, not an organization.
-- User-created entities, Collections, Groups, and Items replace Solayana administration concepts.
+- User-created spaces, Collections, Groups, and Items replace Solayana administration concepts.
 - Floating toolbar is top right and contains only logo/name, user, and help controls.
 - Main prompt retains attachment and submit controls; no provider/model selector.
 - No left chat flyout and no canvas shift for chat.
 - Skills belong to the user hub and customize the user's organizer experience.
-- Users can change entity, collection, and group colors. Items inherit their parent entity color.
+- Users can change space, collection, and group colors. Items inherit their parent space color.
 
 Decisions confirmed by the user:
 
 - Collections have user-defined fields.
-- Groups contain full entities, which can have their own lists, groups, and items. Support nested entity canvases.
+- Groups contain full spaces, which can have their own lists, groups, and items. Support nested space canvases.
 
 ## Source inventory and port boundaries
 
@@ -67,20 +67,20 @@ Create a state-by-state parity checklist and reference screenshots before adapti
 | Record | Purpose |
 | --- | --- |
 | User profile | Root hub name, appearance, and preferences. A local profile initially; Supabase Auth identity later. |
-| Entity | Full organizer hub, owned by a user; optionally belongs to a Group. |
-| Collection | Collection branch on an entity, with ordered field definitions and records. |
+| Space | Full organizer hub, owned by a user; optionally belongs to a Group. |
+| Collection | Collection branch on a space, with ordered field definitions and records. |
 | Collection field | Stable ID, label, type, order, required/default settings. Begin with text, long text, number, date, checkbox, and single-select. |
 | Collection record | Stable ID, collection ID, typed values keyed by field ID, timestamps, and revision. |
-| Group | Branch on an entity with the existing stroke arc/fan; contains ordered child entities. |
-| Item | Single structured detail/note attached to an entity; inherits its entity's color. |
-| Skill | User-owned instruction text, command, description, enabled flag, version, and optional entity scope. |
+| Group | Branch on a space with the existing stroke arc/fan; contains ordered child spaces. |
+| Item | Single structured detail/note attached to a space; inherits its space's color. |
+| Skill | User-owned instruction text, command, description, enabled flag, version, and optional space scope. |
 | Attachment | Private file metadata and local Blob initially; private Supabase Storage object later. |
 | Canvas view state | Per-user/per-view camera, positions, branch open/collapsed states, anchor angles, and panel positions. |
-| Prompt history/action plan | Prompt replies and pending action previews, separated from entity content. |
+| Prompt history/action plan | Prompt replies and pending action previews, separated from space content. |
 
 Use UUIDs, timestamps, explicit ordering, schema versions, and record revisions from the start. Enforce parent ownership, acyclic nesting, valid field types, and parent/child references. Root hub cannot be deleted. Skills remain available from the user hub rather than requiring a fake provider/model/organization node.
 
-Colors use stored overrides for entities, collections, and groups. Unset values use the existing palette. Items resolve color dynamically from the parent; connector/fan/flyout colors follow the source node. Color controls use the existing dialog/control styling.
+Colors use stored overrides for spaces, collections, and groups. Unset values use the existing palette. Items resolve color dynamically from the parent; connector/fan/flyout colors follow the source node. Color controls use the existing dialog/control styling.
 
 Field renames preserve values because values use field IDs. Field deletion or incompatible type conversion requires a preview and confirmation; do not silently discard stored data.
 
@@ -116,7 +116,7 @@ kirayana/
 Port Solayana's action/skill concepts and presentation; adapt their semantics to personal organization. Solayana's PHP handlers cannot be used directly in this React/Supabase application.
 
 - One action registry powers context menus, action discovery, slash-command suggestions, and AI tool schemas.
-- Typed operations include create/rename/move entity, create/update collection fields and records, create group/item, set color, expand/open, and manage skills.
+- Typed operations include create/rename/move space, create/update collection fields and records, create group/item, set color, expand/open, and manage skills.
 - Manual UI actions execute through the same validated domain services as prompt actions.
 - Natural-language AI mutations produce a reviewable preview before execution. Destructive operations always require explicit confirmation.
 - Pending plans store target IDs and revisions; recheck before applying. Duplicate confirmation must not replay writes.
@@ -131,28 +131,28 @@ Port Solayana's action/skill concepts and presentation; adapt their semantics to
 
 ### Phase 1 — Exact canvas foundation with local persistence
 
-Build a runnable React/TypeScript/Vite app. Port the actual canvas renderer and supporting UI; isolate organization-specific reads/writes behind the local repository. Start with a local user hub and attached Skills branch, collapsed. Use the existing context-menu treatment to add an entity. Keep the requested top-right toolbar, prompt shell, attachments control, submit control, camera controls, and floating detail frame. No left chat flyout or model selector.
+Build a runnable React/TypeScript/Vite app. Port the actual canvas renderer and supporting UI; isolate organization-specific reads/writes behind the local repository. Start with a local user hub and attached Skills branch, collapsed. Use the existing context-menu treatment to add a space. Keep the requested top-right toolbar, prompt shell, attachments control, submit control, camera controls, and floating detail frame. No left chat flyout or model selector.
 
-Port existing geometry and interaction helpers, rather than recreating lookalike components. Persist root/entity positions, camera, collapse state, colors, and view navigation in IndexedDB. Use temporary reference fixtures for visual comparison; do not permanently seed example entities into a user's organizer.
+Port existing geometry and interaction helpers, rather than recreating lookalike components. Persist root/space positions, camera, collapse state, colors, and view navigation in IndexedDB. Use temporary reference fixtures for visual comparison; do not permanently seed example spaces into a user's organizer.
 
 Acceptance:
 
 - `npm install`, `npm run dev`, and `npm run build` work without Docker, Supabase, or OpenAI.
 - The canvas matches Solayana's baseline background, orbs, controls, blur, and transitions except the explicit requested differences.
-- Add/rename/recolor/drag an entity, expand/collapse it, pan/zoom, and refresh without losing state.
+- Add/rename/recolor/drag a space, expand/collapse it, pan/zoom, and refresh without losing state.
 - Single/double click, drag, right click, keyboard access, and flyout open/close follow the source behavior.
 - Prompt shell renders with local replies/unavailable-AI messaging, without making secret-bearing API calls.
 - Focused camera/placement/storage checks pass; capture baseline comparison screenshots.
 
 ### Phase 2 — Organizer branches and user-defined records
 
-Add Collection, Group, and Item creation on the user hub and entity hubs through existing right-click menus. Implement field definition/editing, typed record forms, list search, record details, and shared right flyout. Add color controls and inherited Item colors.
+Add Collection, Group, and Item creation on the user hub and space hubs through existing right-click menus. Implement field definition/editing, typed record forms, list search, record details, and shared right flyout. Add color controls and inherited Item colors.
 
-Port the complete fan and curved connector behavior for Groups. Allow full entities inside fans, nested entity canvases, and return navigation. Preserve separate view states and reject cyclic moves. Use the same list/detail and nested detail opening/closing behavior as the source.
+Port the complete fan and curved connector behavior for Groups. Allow full spaces inside fans, nested space canvases, and return navigation. Preserve separate view states and reject cyclic moves. Use the same list/detail and nested detail opening/closing behavior as the source.
 
 Acceptance:
 
-- A user builds nested entities containing all three branch types, edits their content, and reloads successfully.
+- A user builds nested spaces containing all three branch types, edits their content, and reloads successfully.
 - Custom field edits preserve values and validate required/type constraints.
 - Fan/arc/connector drag and collapse parity passes at several angles and zoom levels.
 - Panels open outward without avoidable collisions and remain fixed in world space on pan.
@@ -202,7 +202,7 @@ Run the full parity matrix across desktop mouse, trackpad, supported touch/mobil
 Acceptance:
 
 - Reference comparison covers every interaction in the visual contract, not only the initial screen.
-- Fresh account → create entity → add collection/group/item → customize fields/colors/skills → prompt action → reload works on the hosted origin.
+- Fresh account → create space → add collection/group/item → customize fields/colors/skills → prompt action → reload works on the hosted origin.
 - Production setup and deploy steps are reproducible, without containers.
 
 ## Implementation sequence

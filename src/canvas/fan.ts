@@ -1,17 +1,28 @@
 import type { Node } from '../organizer/model'
 import type { Point } from './canvasCamera'
-export type FanSlot = { project: Node; angle: number; radius: number; outer: number; start: number; end: number }
+export type FanSlot = { project: Node; angle: number; radius: number; outer: number; orbRadius: number; ring: number; start: number; end: number }
 export const projectFanStart = -Math.PI / 2
 export const projectFanStep = .49
 export const projectFanEdgePadding = .1
 export const projectFanCollapsedOuter = 105
 export const projectFanOrbRadius = 23
-const projectsPerRing = 10
+export const projectFanMaxSpan = Math.PI * 3 / 2
+export const projectFanRowGap = 10
 export function fanSlots(projects: Node[]): FanSlot[] {
-  return projects.map((project, index) => {
-    const ring = Math.floor(index / projectsPerRing)
-    const angle = projectFanStart + projectFanEdgePadding + ((index % projectsPerRing) + .5) * projectFanStep
-    return { project, angle, radius: 124 + ring * 70, outer: 173 + ring * 70, start: angle - projectFanStep / 2, end: angle + projectFanStep / 2 }
+  let ring = 0, column = 0, radius = 124
+  return projects.map(project => {
+    const orbRadius = Math.max(9, projectFanOrbRadius * .88 ** ring)
+    const capacity = Math.max(5, Math.floor((projectFanMaxSpan - 2 * projectFanEdgePadding) * radius / (orbRadius * 2 + 6)))
+    const step = (projectFanMaxSpan - 2 * projectFanEdgePadding) / capacity
+    const angle = projectFanStart + projectFanEdgePadding + (column + .5) * step
+    const slot = { project, angle, radius, orbRadius, ring, outer: radius + orbRadius + 26, start: angle - step / 2, end: angle + step / 2 }
+    column++
+    if (column === capacity) {
+      const nextOrbRadius = Math.max(9, projectFanOrbRadius * .88 ** (ring + 1))
+      radius += orbRadius + nextOrbRadius + projectFanRowGap
+      ring++; column = 0
+    }
+    return slot
   })
 }
 export function drawFanLabel(ctx: CanvasRenderingContext2D, center: Point, radius: number, start: number, end: number, color: string, label: string) {
@@ -41,7 +52,7 @@ export function fanGeometry(slots: FanSlot[], reveal: number, spread: number, fa
   const inner = (50 + 40 * reveal) * factor
   const outerRadius = projectFanCollapsedOuter + (Math.max(...slots.map(slot => slot.outer)) - projectFanCollapsedOuter) * spread
   const outer = (50 + (outerRadius - 50) * reveal) * factor
-  return { inner, outer, start: projectFanStart, end: Math.max(...slots.map(slot => slot.end)) + projectFanEdgePadding }
+  return { inner, outer, start: projectFanStart, end: Math.min(projectFanStart + projectFanMaxSpan, Math.max(projectFanStart, ...slots.map(slot => slot.end)) + projectFanEdgePadding) }
 }
 export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: FanSlot[], reveal: number, spread: number, factor: number, color: string, label: string, opacity: number, hover = 0, viewport = { width: 0, height: 0 }) {
   if (!slots.length || reveal <= 0 || opacity <= 0) return
