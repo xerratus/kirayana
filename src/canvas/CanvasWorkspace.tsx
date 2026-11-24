@@ -24,7 +24,7 @@ import { fanSlots, fanGeometry, drawFan, angleDistance } from './fan'
 import { CollectionEditor, CollectionList, ItemEditor, RecordSummary, kindLabel, recordTitle } from '../organizer/OrganizerContent'
 import { useSceneAnimation } from './useSceneAnimation'
 import { GroupDirectory } from './GroupDirectory'
-import { browseSpaces, groupWindow, revealOffset, initialGroupBrowse, type GroupBrowse } from './groupBrowser'
+import { browseSpaces, groupPageSize, streamOrb, groupWindow, revealOffset, initialGroupBrowse, type GroupBrowse } from './groupBrowser'
 
 type Change = (update: (state: Organizer) => Organizer) => void
 type Menu = { id: string | null; x: number; y: number } | null
@@ -167,12 +167,13 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     const slots=turning ? [...turn!.from.filter(slot=>!incoming.has(slot.project.id)),...turn!.to] : turn ? fan.slots : retiringFanSlots.current.get(fan.visual.node.id)??fan.slots
     return slots.map(slot => {
     const entering=incoming.has(slot.project.id)
-    const angle=turning ? slot.angle+turn!.direction*Math.PI*2*(entering ? progress-1 : progress) : turn ? slot.angle : (animation[`fan-orb-angle:${slot.project.id}`]??slot.angle)
+    const stream=turning ? streamOrb(slot.angle,progress,turn!.direction,entering) : null
+    const angle=stream ? stream.angle : turn ? slot.angle : (animation[`fan-orb-angle:${slot.project.id}`]??slot.angle)
     const radius=turn ? slot.radius : animation[`fan-orb-radius:${slot.project.id}`]??slot.radius
     const distance = (50 + (96 + (radius - 96) * fan.spread - 50) * fan.reveal) * fan.factor
     const point = { x: fan.visual.point.x + Math.cos(angle) * distance, y: fan.visual.point.y + Math.sin(angle) * distance }
-    return { node: slot.project, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (turning ? entering ? progress : 1-progress : turn ? 1 : animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
-  })})
+    return { seam:stream && Math.abs(angle+Math.PI/2)<.4 ? 'right' : stream && Math.abs(angle-Math.PI*3/2)<.4 ? 'left' : null, seamX:fan.visual.point.x, node: slot.project, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (turning ? stream!.visible ? 1 : 0 : turn ? 1 : animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
+  }).filter(orb=>orb.opacity>.001)})
   const visualsRef = useRef(visuals); visualsRef.current = visuals
   const latest = useRef({ state, view, root, camera, scale, focus, center, focused }); latest.current = { state, view, root, camera, scale, focus, center, focused }
   const patchView = (fn: (current: typeof view) => typeof view) => change(s => ({ ...s, views: { ...s.views, [s.viewId]: fn(s.views[s.viewId] ?? emptyView()) } }))
@@ -369,7 +370,12 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       }
       if (parent.node.kind === 'subset') {
         const source = fanOrbs.find(o => o.node.id === v.node.id)
-        if (source) drawProjectCone(ctx, source.point, v.point, Math.max(2, source.radius), v.radius, v.node.color, v.progress * .2)
+        const slot=fanSources.current.get(v.node.id), fan=fans.find(f=>f.visual.node.id===parent.node.id)
+        if (source && slot && fan) {
+          const distance=(50+(96+(slot.radius-96)*fan.spread-50)*fan.reveal)*fan.factor
+          const anchor={x:parent.point.x+Math.cos(slot.angle)*distance,y:parent.point.y+Math.sin(slot.angle)*distance}
+          drawProjectCone(ctx,anchor,v.point,Math.max(2,source.radius),v.radius,v.node.color,v.progress*.2*source.opacity)
+        }
         continue
       }
       const angle = Math.atan2(v.point.y - parent.point.y, v.point.x - parent.point.x)
@@ -397,12 +403,22 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     for (const orb of fanOrbs) {
       if (orb.radius <= 0) continue
       const spread = animation[`spread:${orb.subsetId}`] ?? 1
-      ctx.save(); ctx.globalAlpha = orb.opacity; ctx.translate(orb.point.x, orb.point.y); ctx.scale(spread, spread)
+      ctx.save()
+      if(orb.seam) {
+        ctx.beginPath();ctx.rect(orb.seam==='right' ? orb.seamX+.7 : 0,0,orb.seam==='right' ? width : Math.max(0,orb.seamX-.7),height);ctx.clip()
+      }
+      ctx.globalAlpha = orb.opacity; ctx.translate(orb.point.x, orb.point.y); ctx.scale(spread, spread)
       drawOrb(ctx, 'projects', 0, 0, orb.radius / spread, orb.node.color, background, hovered === orb.node.id || highlightSpace === orb.node.id ? 1 : 0)
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = orb.node.color
       ctx.font = `700 ${Math.max(8, 13 * (orb.slot.orbRadius / 23) * scale * depthAtScreen(orb.point, viewport))}px sans-serif`
       const words = orb.node.name.trim().split(/\s+/), last=words.at(-1)!, initials = (/^\d{1,3}$/.test(last) ? last : words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0,2)).toUpperCase()
       ctx.fillText(initials, 0, 0); ctx.restore()
+    }
+    // Keep the separator above the stream as orbs pass underneath it.
+    for(const fan of fans) {
+      const geometry=fanGeometry(fan.slots,fan.reveal,fan.spread,fan.factor)
+      ctx.save();ctx.globalAlpha=fan.visual.progress*fan.reveal;ctx.strokeStyle=fan.visual.node.color;ctx.lineWidth=1.25
+      ctx.beginPath();ctx.moveTo(fan.visual.point.x,fan.visual.point.y-geometry.inner);ctx.lineTo(fan.visual.point.x,fan.visual.point.y-geometry.outer);ctx.stroke();ctx.restore()
     }
   })
 
@@ -536,9 +552,9 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       {fans.filter(fan=>fan.visual.progress>.5 && fan.reveal>.5 && fan.spread>.5).map(fan=>{const group=fan.visual.node,window=windowFor(group.id),geometry=fanGeometry(fan.slots,fan.reveal,fan.spread,fan.factor);return <div key={`browse:${group.id}`}>
         <div className="kirayana-group-search" style={{left:fan.visual.point.x,top:fan.visual.point.y-geometry.outer,'--group-color':group.color} as CSSProperties}><UiIconButton label={`Search ${group.name} Spaces`} onClick={()=>openGroupDirectory(group.id)}><Search size={14}/></UiIconButton></div>
         <div className="kirayana-group-controls" role="group" aria-label={`${group.name} navigation`} style={{left:fan.visual.point.x,top:fan.visual.point.y+geometry.outer+16,'--group-color':group.color} as CSSProperties}>
-          <UiIconButton label={`Previous ${group.name} Spaces`} disabled={!window.offset} onClick={()=>browseGroup(group.id,{offset:window.offset-37})}><ChevronLeft size={15}/></UiIconButton>
+          <UiIconButton label={`Previous ${group.name} Spaces`} disabled={!window.offset} onClick={()=>browseGroup(group.id,{offset:window.offset-groupPageSize})}><ChevronLeft size={15}/></UiIconButton>
           <button className="ui-icon-action kirayana-group-count" onClick={()=>openGroupDirectory(group.id)} aria-label={`Browse ${group.name}: ${window.total} Spaces`}>{window.total ? `${window.offset+1}–${window.end}` : '0'} / {window.total}</button>
-          <UiIconButton label={`Next ${group.name} Spaces`} disabled={window.end===window.total} onClick={()=>browseGroup(group.id,{offset:window.offset+37})}><ChevronRight size={15}/></UiIconButton>
+          <UiIconButton label={`Next ${group.name} Spaces`} disabled={window.end===window.total} onClick={()=>browseGroup(group.id,{offset:window.offset+groupPageSize})}><ChevronRight size={15}/></UiIconButton>
         </div>
       </div>})}
       {fanOrbs.filter(orb=>orb.node.id===hovered && orb.opacity>.8).map(orb=><span key={`hint:${orb.node.id}`} className="kirayana-group-tooltip" style={{left:orb.point.x,top:orb.point.y-orb.radius-12}}>{orb.node.name}</span>)}

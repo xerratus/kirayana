@@ -12,7 +12,7 @@ try{
  await settle()
  let state=await saved(),group=state.nodes.find(n=>n.name==='451 Spaces')
  assert.equal(state.nodes.filter(n=>n.parentId===group.id).length,451)
- assert.equal(await page.locator('[data-fan-orb]').count(),37)
+ assert.equal(await page.locator('[data-fan-orb]').count(),14)
  await page.getByRole('button',{name:'Browse 451 Spaces: 451 Spaces',exact:true}).click()
  const search=page.getByRole('searchbox',{name:'Search Spaces',exact:true})
  await search.fill('Space 451');await settle()
@@ -23,7 +23,7 @@ try{
  await search.fill('');await page.getByRole('combobox',{name:'Sort',exact:true}).selectOption('name');await settle()
  await page.getByRole('button',{name:'Reveal Space 451',exact:true}).click();await settle()
  await page.getByRole('button',{name:'Close side panel',exact:true}).click();await settle()
- assert.equal(await page.getByRole('button',{name:'Browse 451 Spaces: 451 Spaces',exact:true}).innerText(),'415–451 / 451')
+ assert.equal(await page.getByRole('button',{name:'Browse 451 Spaces: 451 Spaces',exact:true}).innerText(),'438–451 / 451')
  // Expand the final Space and verify that paging preserves its world location.
  const button=page.getByRole('button',{name:'Open Space 451 space',exact:true})
  await button.focus();await page.keyboard.press('Enter');await settle()
@@ -35,7 +35,7 @@ try{
  assert.deepEqual(afterNode.position,beforeNode.position)
  const after=await page.locator(`[data-orb="${last.id}"]`).boundingBox()
  assert.ok(Math.abs(after.x-opened.x)<1 && Math.abs(after.y-opened.y)<1)
- assert.equal(await page.locator('[data-fan-orb]').count(),37)
+ assert.equal(await page.locator('[data-fan-orb]').count(),14)
  const cameraBefore=(await saved()).views[group.parentId].camera
  await page.locator('canvas').focus();await page.mouse.move(30,900);await page.mouse.wheel(0,30);await settle()
  const cameraAfter=(await saved()).views[group.parentId].camera
@@ -46,5 +46,5 @@ try{
  state=await saved();assert.equal(state.nodes.filter(n=>n.name==='451 Spaces').length,1)
  assert.equal(state.nodes.filter(n=>n.parentId===group.id).length,451)
  assert.deepEqual(errors,[])
- console.log('Browser passed: 451-Space fixture, two rows, search, final page, open Space position, ordinary pan, and no duplicate fixture on reload.')
+ console.log('Browser passed: 451-Space fixture, one row, search, final page, open Space position, ordinary pan, and no duplicate fixture on reload.')
 }finally{await context.close();await browser.close()}

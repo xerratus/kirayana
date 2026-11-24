@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
-import { fanGeometry, fanSlots, projectFanRowGap } from './fan'
+import { fanGeometry, fanSlots } from './fan'
 import { addNode, initialOrganizer } from '../organizer/model'
-it('caps the fan at 360 degrees, adds radial rows, and shrinks outer orbs',()=>{
+it('caps the fan at 360 degrees, keeps one row',()=>{
  let s=initialOrganizer();for(let i=0;i<40;i++)s=addNode(s,s.rootId,'entity',`Space ${i}`,'#4c9df4',{x:0,y:0})
  const slots=fanSlots(s.nodes.filter(n=>n.kind==='entity'))
  const open=fanGeometry(slots,1,1,1),closed=fanGeometry(slots,1,0,1)
@@ -9,10 +9,7 @@ it('caps the fan at 360 degrees, adds radial rows, and shrinks outer orbs',()=>{
  expect(open.end-open.start).toBe(closed.end-closed.start)
  expect(closed.outer).toBe(105)
  const rows = [...new Map(slots.map(slot => [slot.ring, slot])).values()]
- expect(rows).toHaveLength(2)
- expect(rows[1].radius).toBeGreaterThan(rows[0].radius)
- expect(rows[1].orbRadius).toBeLessThan(rows[0].orbRadius)
- for(let i=1;i<rows.length;i++)expect(rows[i].radius-rows[i-1].radius-rows[i].orbRadius-rows[i-1].orbRadius).toBeCloseTo(projectFanRowGap)
+ expect(rows).toHaveLength(1)
  for(const slot of slots) expect(slot.end).toBeLessThanOrEqual(-Math.PI/2+Math.PI*2)
  for(let i=0;i<slots.length;i++)for(let j=i+1;j<slots.length;j++){
    const a=slots[i],b=slots[j],distance=Math.hypot(Math.cos(a.angle)*a.radius-Math.cos(b.angle)*b.radius,Math.sin(a.angle)*a.radius-Math.sin(b.angle)*b.radius)
@@ -32,26 +29,26 @@ it('anchors both funnel start points to the draggable arc at different angles', 
  }
 })
 
-it('fills a full clockwise circle before adding an outer row',()=>{
+it('fills a full clockwise circle and limits the visible row',()=>{
  let s=initialOrganizer();for(let i=0;i<15;i++)s=addNode(s,s.rootId,'entity',`Space ${i}`,'#4c9df4',{x:0,y:0})
  const slots=fanSlots(s.nodes.filter(n=>n.kind==='entity'))
  expect(slots.slice(0,14).every(slot=>slot.ring===0)).toBe(true)
- expect(slots[14].ring).toBe(1)
+ expect(slots).toHaveLength(14)
  const geometry=fanGeometry(slots,1,1,1)
  expect(geometry.start).toBeCloseTo(-Math.PI/2)
  expect(geometry.end).toBeCloseTo(Math.PI*3/2)
 })
 
-it('caps even 500 Spaces at two rows with clearance across the 12 o’clock seam',()=>{
+it('caps even 500 Spaces at one row with clearance across the 12 o’clock seam',()=>{
  const template=initialOrganizer().nodes[0]
  const nodes=Array.from({length:500},(_,i)=>({...template,id:`space-${i}`,kind:'entity' as const,name:`Space ${i}`}))
  const slots=fanSlots(nodes)
- expect(slots).toHaveLength(37)
- expect([0,1].map(ring=>slots.filter(slot=>slot.ring===ring).length)).toEqual([14,23])
+ expect(slots).toHaveLength(14)
+ expect(slots.every(slot=>slot.ring===0)).toBe(true)
  const geometry=fanGeometry(slots,1,1,1)
  expect(geometry.start).toBeCloseTo(-Math.PI/2)
  expect(geometry.end-geometry.start).toBeCloseTo(Math.PI*2)
- for(let i=0;i<37;i++)for(let j=i+1;j<37;j++){
+ for(let i=0;i<14;i++)for(let j=i+1;j<14;j++){
   const a=slots[i],b=slots[j]
   expect(Math.hypot(Math.cos(a.angle)*a.radius-Math.cos(b.angle)*b.radius,Math.sin(a.angle)*a.radius-Math.sin(b.angle)*b.radius)).toBeGreaterThan(a.orbRadius+b.orbRadius+4)
  }

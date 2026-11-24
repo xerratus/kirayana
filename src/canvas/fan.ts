@@ -10,7 +10,7 @@ export const projectFanMaxSpan = Math.PI * 2
 export const projectFanRowGap = 10
 export function fanSlots(projects: Node[]): FanSlot[] {
   let ring = 0, column = 0, radius = 124
-  return projects.slice(0, 37).map(project => {
+  return projects.slice(0, 14).map(project => {
     const orbRadius = Math.max(9, projectFanOrbRadius * .88 ** ring)
     const capacity = Math.max(5, Math.floor((projectFanMaxSpan - 2 * projectFanEdgePadding) * radius / (orbRadius * 2 + 6)))
     const step = (projectFanMaxSpan - 2 * projectFanEdgePadding) / capacity
