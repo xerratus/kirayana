@@ -407,9 +407,6 @@
 .canvas-prompt:is(:focus-within, .is-active) textarea { height: 53px; }
 .canvas-prompt textarea:focus-visible { outline: none; box-shadow: none; }
 .canvas-stage > :not(.canvas-prompt):not(.canvas-response):not(.canvas-inspector):not(.canvas-prompt-typeahead) { transition: filter 220ms ease; }
-.canvas-workspace:has(.canvas-prompt.is-active, .canvas-response:focus-within) .canvas-stage > :not(.canvas-prompt):not(.canvas-response):not(.canvas-prompt-typeahead) { filter: blur(1px); }
-.canvas-stage.is-prompt-active > :not(.canvas-prompt):not(.canvas-response):not(.canvas-prompt-typeahead) { filter: blur(3px) brightness(.8); pointer-events: none; }
-.canvas-stage.is-prompt-active > :not(.canvas-prompt):not(.canvas-response):not(.canvas-prompt-typeahead) * { pointer-events: none !important; }
 .canvas-prompt-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .canvas-prompt-actions-spacer { flex: 1; }
 .canvas-prompt-actions .custom-select-trigger,
