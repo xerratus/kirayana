@@ -101,6 +101,14 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     setGroupBrowsing(current=>({...current,[`${root.id}:${id}`]:{...current[`${root.id}:${id}`]??initialGroupBrowse,...update}}))
   }
   for(const group of visible.filter(n=>n.kind==='subset'))for(const slot of fanSlotsFor(group.id))if(!view.expandedEntities?.includes(slot.project.id))fanSources.current.set(slot.project.id,slot)
+  for(const id of view.expandedEntities??[]) {
+    if(fanSources.current.has(id))continue
+    const node=state.nodes.find(n=>n.id===id), parent=state.nodes.find(n=>n.id===node?.parentId)
+    if(!node || parent?.kind!=='subset')continue
+    const slot=fanSlotsFor(parent.id).find(slot=>slot.project.id===id)??fanSlots([node])[0]
+    const anchor=node.fanAnchor??{angle:Math.atan2(node.position.y-parent.position.y,node.position.x-parent.position.x),radius:slot.radius,orbRadius:slot.orbRadius}
+    fanSources.current.set(id,{...slot,...anchor})
+  }
   const camera = view.camera
   useEffect(() => { setMenu(null) }, [root.id, camera.zoom, camera.pan.x, camera.pan.y])
   const scale = orbScale(viewport.width, viewport.height) * camera.zoom
@@ -241,6 +249,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       let next=updateNode(s,node.id,{collapsed:!expand})
       const saved=s.nodes.find(n=>n.id===node.id)!, parent=s.nodes.find(n=>n.id===node.parentId)
       const slot=fanSources.current.get(node.id)??fanSlotsFor(node.parentId??'').find(slot=>slot.project.id===node.id)
+      if(expand && fanSpace && slot)next={...next,nodes:next.nodes.map(n=>n.id===node.id ? {...n,fanAnchor:{angle:slot.angle,radius:slot.radius,orbRadius:slot.orbRadius}} : n)}
       if(expand && fanSpace && parent && slot && !saved.fanPositioned && !current.expandedEntities?.includes(node.id)) {
         let distance=Math.max(310,slot.outer+170)
         let point={x:parent.position.x+Math.cos(slot.angle)*distance,y:parent.position.y+Math.sin(slot.angle)*distance}
@@ -382,12 +391,11 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
         continue
       }
       if (parent.node.kind === 'subset') {
-        const source = fanOrbs.find(o => o.node.id === v.node.id)
         const slot=fanSources.current.get(v.node.id), fan=fans.find(f=>f.visual.node.id===parent.node.id)
-        if (source && slot && fan) {
+        if (slot && fan) {
           const distance=(50+(96+(slot.radius-96)*fan.spread-50)*fan.reveal)*fan.factor
           const anchor={x:parent.point.x+Math.cos(slot.angle)*distance,y:parent.point.y+Math.sin(slot.angle)*distance}
-          drawProjectCone(ctx,anchor,v.point,Math.max(2,source.radius),v.radius,v.node.color,v.progress*.2*source.opacity)
+          drawProjectCone(ctx,anchor,v.point,Math.max(2,slot.orbRadius*fan.factor*fan.spread),v.radius,v.node.color,v.progress*.2*fan.reveal,2.5)
         }
         continue
       }
