@@ -36,3 +36,10 @@ it('keeps orb edges alive while passing under either side of the divider',()=>{
  expect(streamOrb(-Math.PI/2-.3,1,-1,true).visible).toBe(false)
  expect(streamOrb(Math.PI*3/2+.3,1,-1,true).visible).toBe(false)
 })
+
+it('matches the beginning of a name word rather than digits inside it',()=>{
+ const matches=browseSpaces(nodes,{...initialGroupBrowse,query:'20'})
+ expect(matches.map(node=>node.name)).toEqual(Array.from({length:10},(_,i)=>`Space ${200+i}`))
+ expect(matches.some(node=>node.name==='Space 020')).toBe(false)
+ expect(browseSpaces(nodes,{...initialGroupBrowse,query:'SPACE 20'})).toHaveLength(10)
+})

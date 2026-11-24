@@ -4,7 +4,7 @@ export type GroupBrowse = { offset: number; query: string; sort: 'created' | 'na
 export const initialGroupBrowse: GroupBrowse = { offset: 0, query: '', sort: 'created' }
 export function browseSpaces(nodes: Node[], browse: GroupBrowse) {
   const query=browse.query.trim().toLocaleLowerCase()
-  return nodes.filter(n=>!query || [n.name,...Object.values(n.values ?? {}).map(String)].join(' ').toLocaleLowerCase().includes(query)).sort((a,b)=>browse.sort==='name' ? a.name.localeCompare(b.name,undefined,{numeric:true}) || a.id.localeCompare(b.id) : a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
+  return nodes.filter(n=>!query || [n.name,...Object.values(n.values ?? {}).map(String)].some(value=>{const text=value.toLocaleLowerCase().replace(/^https?:\/\//,'');return text.split(/\s+/).some((_,index,words)=>words.slice(index).join(' ').startsWith(query))})).sort((a,b)=>browse.sort==='name' ? a.name.localeCompare(b.name,undefined,{numeric:true}) || a.id.localeCompare(b.id) : a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))
 }
 export function groupWindow(nodes: Node[], offset: number) {
   const start=Math.max(0,Math.min(Math.max(0,nodes.length-groupPageSize),Math.round(offset)))
