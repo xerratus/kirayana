@@ -128,6 +128,10 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     if(pageTurn)targets[`page-turn:${group.id}:${pageTurn.serial}:${pageTurn.duration}`]=1
     for(const slot of fanSlotsFor(group.id)) { targets[`fan-orb-visible:${slot.project.id}`]=1; targets[`fan-orb-angle:${slot.project.id}`]=slot.angle; targets[`fan-orb-radius:${slot.project.id}`]=slot.radius }
   }
+  for(const id of view.expandedEntities??[]) {
+    const node=state.nodes.find(n=>n.id===id)
+    targets[`cone:${root.id}:${id}`]=node && windowFor(node.parentId??'').nodes.some(n=>n.id===id) ? 1 : 0
+  }
   const { values: animation } = useSceneAnimation(targets, focused)
   expansionValues.current = animation
   const focus = animation.focus ?? 1
@@ -391,11 +395,13 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
         continue
       }
       if (parent.node.kind === 'subset') {
-        const slot=fanSources.current.get(v.node.id), fan=fans.find(f=>f.visual.node.id===parent.node.id)
-        if (slot && fan) {
+        const fan=fans.find(f=>f.visual.node.id===parent.node.id), turn=pageTurns[parent.node.id]
+        const presence=animation[`cone:${root.id}:${v.node.id}`]??0
+        const slot=fan?.slots.find(slot=>slot.project.id===v.node.id)??turn?.from.find(slot=>slot.project.id===v.node.id)??fanSources.current.get(v.node.id)
+        if (slot && fan && presence>.001) {
           const distance=(50+(96+(slot.radius-96)*fan.spread-50)*fan.reveal)*fan.factor
-          const anchor={x:parent.point.x+Math.cos(slot.angle)*distance,y:parent.point.y+Math.sin(slot.angle)*distance}
-          drawProjectCone(ctx,anchor,v.point,Math.max(2,slot.orbRadius*fan.factor*fan.spread),v.radius,v.node.color,v.progress*.2*fan.reveal,2.5)
+          const origin={x:parent.point.x+Math.cos(slot.angle)*distance,y:parent.point.y+Math.sin(slot.angle)*distance}
+          drawProjectCone(ctx,origin,v.point,Math.max(2,slot.orbRadius*fan.factor*fan.spread),v.radius,v.node.color,v.progress*.2*fan.reveal*presence,2.5)
         }
         continue
       }
