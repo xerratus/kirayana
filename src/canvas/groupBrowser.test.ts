@@ -1,6 +1,6 @@
 import { expect,it } from 'vitest'
 import { initialOrganizer, type Node } from '../organizer/model'
-import { browseSpaces, groupWindow, rotateGroupWindow, initialGroupBrowse, revealOffset } from './groupBrowser'
+import { browseSpaces, groupWindow, initialGroupBrowse, revealOffset } from './groupBrowser'
 const nodes:Node[]=Array.from({length:500},(_,i)=>({...initialOrganizer().nodes[0],id:`s${i}`,name:`Space ${String(i+1).padStart(3,'0')}`,kind:'entity',createdAt:new Date(i*1000).toISOString(),values:{url:`https://server-${i+1}.example`}}))
 it('keeps windows bounded and reaches every one of 500 Spaces',()=>{
  const seen=new Set<string>()
@@ -18,13 +18,4 @@ it('searches names and custom fields, sorts naturally, and reveals the final Spa
  const offset=revealOffset(nodes,'s499')
  expect(groupWindow(nodes,offset).nodes.some(n=>n.id==='s499')).toBe(true)
  expect(nodes[0].id).toBe('s0')
-})
-
-it('rotates in either direction, wraps around, and snaps at orb positions',()=>{
- const step=Math.PI*2/23
- expect(rotateGroupWindow(0,451,-step).offset).toBe(1)
- expect(rotateGroupWindow(0,451,step).offset).toBe(414)
- expect(rotateGroupWindow(414,451,-step).offset).toBe(0)
- expect(rotateGroupWindow(0,12,step).offset).toBe(0)
- expect(rotateGroupWindow(0,451,step).rotation).toBeCloseTo(0)
 })

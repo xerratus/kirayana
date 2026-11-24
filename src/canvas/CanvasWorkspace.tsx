@@ -24,7 +24,7 @@ import { fanSlots, fanGeometry, drawFan, angleDistance } from './fan'
 import { CollectionEditor, CollectionList, ItemEditor, RecordSummary, kindLabel, recordTitle } from '../organizer/OrganizerContent'
 import { useSceneAnimation } from './useSceneAnimation'
 import { GroupDirectory } from './GroupDirectory'
-import { browseSpaces, groupWindow, rotateGroupWindow, revealOffset, initialGroupBrowse, type GroupBrowse } from './groupBrowser'
+import { browseSpaces, groupWindow, revealOffset, initialGroupBrowse, type GroupBrowse } from './groupBrowser'
 
 type Change = (update: (state: Organizer) => Organizer) => void
 type Menu = { id: string | null; x: number; y: number } | null
@@ -58,8 +58,9 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   const [groupBrowsing, setGroupBrowsing] = useState<Record<string, GroupBrowse>>({})
   const [groupDirectoryId, setGroupDirectoryId] = useState<string | null>(null)
   const [highlightSpace, setHighlightSpace] = useState<string | null>(null)
-  const [fanRotations, setFanRotations] = useState<Record<string, number>>({})
-  const fanDrag = useRef<{ id:string; angle:number; delta:number; offset:number; total:number; moved:boolean } | null>(null)
+  const [pageTurns,setPageTurns]=useState<Record<string,{from:ReturnType<typeof fanSlots>;to:ReturnType<typeof fanSlots>;direction:number;serial:number}>>({})
+  const pageSerial=useRef(0)
+  const pressedFan=useRef<string|null>(null)
   const retiringFanSlots = useRef(new Map<string, ReturnType<typeof fanSlots>>())
   const fanSources = useRef(new Map<string, ReturnType<typeof fanSlots>[number]>())
   const arcDrag = useRef<string | null>(null)
@@ -88,7 +89,17 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   const groupSpaces = (id:string) => state.nodes.filter(n=>n.parentId===id && n.kind==='entity')
   const windowFor = (id:string) => groupWindow(browseSpaces(groupSpaces(id),browseFor(id)),browseFor(id).offset)
   const fanSlotsFor = (id:string) => fanSlots(windowFor(id).nodes)
-  const browseGroup = (id:string, update:Partial<GroupBrowse>) => { setMenu(null); setGroupBrowsing(current=>({...current,[`${root.id}:${id}`]:{...current[`${root.id}:${id}`]??initialGroupBrowse,...update}})) }
+  const browseGroup = (id:string, update:Partial<GroupBrowse>) => {
+    setMenu(null)
+    const before=windowFor(id), browse={...browseFor(id),...update}
+    const after=groupWindow(browseSpaces(groupSpaces(id),browse),browse.offset)
+    const changed=before.nodes.map(node=>node.id).join()!==after.nodes.map(node=>node.id).join()
+    if(changed) {
+      const direction=update.query!==undefined ? after.total>=before.total ? 1 : -1 : after.offset>before.offset ? -1 : 1
+      setPageTurns(current=>({...current,[id]:{from:fanSlots(before.nodes),to:fanSlots(after.nodes),direction,serial:++pageSerial.current}}))
+    }
+    setGroupBrowsing(current=>({...current,[`${root.id}:${id}`]:{...current[`${root.id}:${id}`]??initialGroupBrowse,...update}}))
+  }
   for(const group of visible.filter(n=>n.kind==='subset'))for(const slot of fanSlotsFor(group.id))if(!view.expandedEntities?.includes(slot.project.id))fanSources.current.set(slot.project.id,slot)
   const camera = view.camera
   useEffect(() => { setMenu(null) }, [root.id, camera.zoom, camera.pan.x, camera.pan.y])
@@ -102,10 +113,11 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   }).concat(state.nodes.filter(n => n.kind === 'entity').map(n => [`hub:${root.id}:${n.id}`, view.expandedEntities?.includes(n.id) ? 1 : 0])))
   for(const group of visible.filter(n=>n.kind==='subset')) {
     const slots=fanSlotsFor(group.id), ids=new Set(slots.map(slot=>slot.project.id))
-    const retired=(retiringFanSlots.current.get(group.id)??[]).filter(slot=>!ids.has(slot.project.id) && (expansionValues.current[`fan-orb-visible:${slot.project.id}`]??1)>.001)
+    const retired=pageTurns[group.id] ? [] : (retiringFanSlots.current.get(group.id)??[]).filter(slot=>!ids.has(slot.project.id) && (expansionValues.current[`fan-orb-visible:${slot.project.id}`]??1)>.001)
     retiringFanSlots.current.set(group.id,[...slots,...retired])
     for(const slot of retired) { targets[`fan-orb-angle:${slot.project.id}`]=-Math.PI/2; targets[`fan-orb-radius:${slot.project.id}`]=slot.radius; targets[`fan-orb-visible:${slot.project.id}`]=0 }
-    targets[`fan-turn:${group.id}`]=fanRotations[group.id]??0
+    const pageTurn=pageTurns[group.id]
+    if(pageTurn)targets[`page-turn:${group.id}:${pageTurn.serial}`]=1
     for(const slot of fanSlotsFor(group.id)) { targets[`fan-orb-visible:${slot.project.id}`]=1; targets[`fan-orb-angle:${slot.project.id}`]=slot.angle; targets[`fan-orb-radius:${slot.project.id}`]=slot.radius }
   }
   const { values: animation } = useSceneAnimation(targets, focused)
@@ -148,13 +160,19 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     visuals.push({ node, point, progress, depth, radius: (isRoot ? 100 : node.kind === 'item' ? 17 * parentReveal : expandedHub ? 72 * parentReveal * hubReveal : (17 + ((node.kind === 'subset' ? 50 + 40 * fan : 50) - 17) * progress) * parentReveal) * scale * focus * depth })
   }
   const fans = visuals.filter(v => v.node.kind === 'subset').map(v => ({ visual: v, slots: fanSlotsFor(v.node.id), reveal: animation[`fan:${v.node.id}`] ?? 1, spread: animation[`spread:${v.node.id}`] ?? 1, factor: scale * focus * v.depth }))
-  const fanOrbs = fans.flatMap(fan => (retiringFanSlots.current.get(fan.visual.node.id)??fan.slots).map(slot => {
-    const angle=(animation[`fan-orb-angle:${slot.project.id}`]??slot.angle)+(animation[`fan-turn:${fan.visual.node.id}`]??0)
-    const radius=animation[`fan-orb-radius:${slot.project.id}`]??slot.radius
+  const fanOrbs = fans.flatMap(fan => {
+    const turn=pageTurns[fan.visual.node.id], progress=turn ? animation[`page-turn:${fan.visual.node.id}:${turn.serial}`]??0 : 1
+    const turning=Boolean(turn && progress<1)
+    const incoming=new Set(turn?.to.map(slot=>slot.project.id))
+    const slots=turning ? [...turn!.from.filter(slot=>!incoming.has(slot.project.id)),...turn!.to] : turn ? fan.slots : retiringFanSlots.current.get(fan.visual.node.id)??fan.slots
+    return slots.map(slot => {
+    const entering=incoming.has(slot.project.id)
+    const angle=turning ? slot.angle+turn!.direction*Math.PI*2*(entering ? progress-1 : progress) : turn ? slot.angle : (animation[`fan-orb-angle:${slot.project.id}`]??slot.angle)
+    const radius=turn ? slot.radius : animation[`fan-orb-radius:${slot.project.id}`]??slot.radius
     const distance = (50 + (96 + (radius - 96) * fan.spread - 50) * fan.reveal) * fan.factor
     const point = { x: fan.visual.point.x + Math.cos(angle) * distance, y: fan.visual.point.y + Math.sin(angle) * distance }
-    return { node: slot.project, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
-  }))
+    return { node: slot.project, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (turning ? entering ? progress : 1-progress : turn ? 1 : animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
+  })})
   const visualsRef = useRef(visuals); visualsRef.current = visuals
   const latest = useRef({ state, view, root, camera, scale, focus, center, focused }); latest.current = { state, view, root, camera, scale, focus, center, focused }
   const patchView = (fn: (current: typeof view) => typeof view) => change(s => ({ ...s, views: { ...s.views, [s.viewId]: fn(s.views[s.viewId] ?? emptyView()) } }))
@@ -408,13 +426,13 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     event.currentTarget.setPointerCapture(event.pointerId)
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     if (pointers.current.size === 2) {
-      fanDrag.current=null;arcDrag.current=null;setFanRotations({})
+      pressedFan.current=null;arcDrag.current=null
       const [a, b] = [...pointers.current.values()]; pinch.current = { distance: Math.hypot(a.x - b.x, a.y - b.y), center: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }; if (drag.current) drag.current.moved = true; return
     }
     const arc = arcAt({ x: event.clientX, y: event.clientY })
     if (arc) { arcDrag.current = arc.visual.node.id; return }
     const fan = fanAt({ x: event.clientX, y: event.clientY })
-    if (fan && !hit({ x: event.clientX, y: event.clientY })) { const window=windowFor(fan.visual.node.id);fanDrag.current={id:fan.visual.node.id,angle:Math.atan2(event.clientY-fan.visual.point.y,event.clientX-fan.visual.point.x),delta:0,offset:window.offset,total:window.total,moved:false};setMenu(null);return }
+    pressedFan.current=fan && !hit({x:event.clientX,y:event.clientY}) ? fan.visual.node.id : null
     const node = hit({ x: event.clientX, y: event.clientY })
     drag.current = { id: node?.id ?? null, origin: { x: event.clientX, y: event.clientY }, pan: camera.pan, positions: Object.fromEntries(state.nodes.map(n => [n.id, n.position])), panels: { ...view.panels }, moved: false, together: event.ctrlKey || event.metaKey }
     event.preventDefault()
@@ -426,19 +444,6 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       const [a, b] = [...pointers.current.values()], distance = Math.hypot(a.x - b.x, a.y - b.y), middle = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, prev = pinch.current
       setCamera(c => { const zoom = Math.max(.5, Math.min(2, c.zoom * distance / Math.max(prev.distance, 1))), ratio = zoom / c.zoom; return { zoom, pan: { x: middle.x - center.x - (prev.center.x - center.x - c.pan.x) * ratio, y: middle.y - center.y - (prev.center.y - center.y - c.pan.y) * ratio } } })
       pinch.current = { distance, center: middle }; return
-    }
-    if(fanDrag.current) {
-      const d=fanDrag.current,fan=fans.find(f=>f.visual.node.id===d.id)
-      if(!fan)return
-      const angle=Math.atan2(p.y-fan.visual.point.y,p.x-fan.visual.point.x)
-      d.delta+=Math.atan2(Math.sin(angle-d.angle),Math.cos(angle-d.angle));d.angle=angle
-      if(Math.abs(d.delta)>.035)d.moved=true
-      if(d.moved){
-        const next=rotateGroupWindow(d.offset,d.total,d.delta)
-        if(d.total>37 && next.offset!==browseFor(d.id).offset)browseGroup(d.id,{offset:next.offset})
-        setFanRotations(current=>({...current,[d.id]:next.rotation}))
-      }
-      return
     }
     if (arcDrag.current) {
       const id = arcDrag.current, node = state.nodes.find(n => n.id === id)!, parent = visuals.find(v => v.node.id === node.parentId) ?? visuals[0]
@@ -474,16 +479,11 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   }
   function pointerUp(event: PointerEvent<HTMLCanvasElement>) {
     pointers.current.delete(event.pointerId)
-    if(fanDrag.current) {
-      const d=fanDrag.current;fanDrag.current=null
-      setFanRotations(current=>({...current,[d.id]:0}))
-      if(d.moved && d.total>37)browseGroup(d.id,{offset:rotateGroupWindow(d.offset,d.total,d.delta).offset})
-      else if(!d.moved)change(s=>({...s,nodes:s.nodes.map(n=>n.id===d.id ? {...n,fanCollapsed:!n.fanCollapsed} : n)}))
-      return
-    }
     if (arcDrag.current) { arcDrag.current = null; return }
     if (pinch.current) { if (pointers.current.size === 0) { pinch.current = null; drag.current = null }; return }
     const d = drag.current; drag.current = null
+    const fan=pressedFan.current;pressedFan.current=null
+    if(d && !d.moved && fan) { change(s=>({...s,nodes:s.nodes.map(n=>n.id===fan ? {...n,fanCollapsed:!n.fanCollapsed} : n)}));return }
     if (d && !d.moved && d.id) { const node = state.nodes.find(n => n.id === d.id); if (node) choose(node) }
   }
   function addFiles(files: FileList | File[]) {
@@ -527,10 +527,10 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   return <main className={`canvas-workspace${flyout || help || directoryGroup ? ' right-flyout-open' : ''}`} onPointerDownCapture={event => { const target = event.target as HTMLElement; if (target.closest('.canvas-prompt,.canvas-response,.canvas-prompt-typeahead')) return; setFocused(false); promptInput.current?.blur() }}>
     <CanvasFloatingFlyoutFrame open={Boolean(flyout || help || directoryGroup)} color={directoryGroup?.color ?? (flyout ? nodeColor(state, flyout) : root.color)} label={directoryGroup ? `${directoryGroup.name} Spaces directory` : help ? 'Help' : `${flyout?.name ?? ''} full view`}>
       <header className="canvas-right-flyout-heading"><div><small>{directoryGroup ? 'Group directory' : help ? brand.name : flyout ? kindLabel(flyout) : 'Details'}</small><h2>{directoryGroup ? directoryGroup.name : help ? 'Your canvas' : state.records.some(r => r.id === flyoutRecordId) ? recordTitle(state, state.records.find(r => r.id === flyoutRecordId)!) : flyout?.name}</h2></div><UiIconButton label="Close side panel" onClick={() => leaveFlyout(() => { setFlyoutId(null); setHelp(false); setGroupDirectoryId(null) })}><X size={18} /></UiIconButton></header>
-      <div className="canvas-right-flyout-body">{directoryGroup ? <GroupDirectory key={directoryGroup.id} group={directoryGroup} spaces={groupSpaces(directoryGroup.id)} browse={browseFor(directoryGroup.id)} onBrowse={update=>browseGroup(directoryGroup.id,update)} onReveal={revealSpace} onOpen={enter} /> : help ? <><p>Right-click your hub or the canvas to add a space, Collection, Group, or Item. Click an expanded orb for details; click a small orb to expand it.</p><p>Double-click the main hub to collapse its children. Double-click a Space to expand or collapse its orbs. Right-click and choose Open canvas to enter it. Right-click for rename, color, move, and expand/collapse controls. Use the pencil icon on a Collection to edit its fields. Items inherit their space’s color.</p><p>Click a Group fan Space to expand it; double-click to expand or collapse its orbs. Click the fan arc to shrink or expand the fan. Drag its outer rim to browse two rows of Spaces. Use the arrows to page, the count for the directory, or the 12 o’clock search button to find a Space by name or field value. Drag the rounded arc beside its parent to move the connector anchor. Drag empty space or use two fingers to pan. Pinch or hold Command/Control while scrolling to zoom. Hold Command/Control while dragging an orb to move its children too.</p><p>Your organizer and attached files are saved only in this browser. Clearing site data removes them. AI is not connected yet.</p></> : flyout?.kind === 'skills' ? <SkillsEditor state={state} change={change} onDirty={onFlyoutDirty} /> : flyout?.kind === 'subset' ? <SubsetSchemaEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /> : flyout?.kind === 'entity' && state.nodes.some(n => n.id === flyout.parentId && n.kind === 'subset') ? <><UiButton onClick={() => edit(flyout)}>Edit name and color</UiButton><SubsetEntityEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /></> : flyout?.kind === 'collection' ? <CollectionEditor key={`${flyout.id}:${flyoutRecordId ?? 'schema'}`} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} recordId={flyoutRecordId} onRecordSaved={() => { flyoutDirty.current = false; setFlyoutId(null); setFlyoutRecordId(null) }} /> : flyout?.kind === 'item' ? <ItemEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /> : <><p>{'Customize this space from its context menu.'}</p>{flyout && <UiButton onClick={() => edit(flyout)}><Pencil size={15} />Edit {flyout.kind === 'user' ? 'profile' : 'space'}</UiButton>}</>}</div>
+      <div className="canvas-right-flyout-body">{directoryGroup ? <GroupDirectory key={directoryGroup.id} group={directoryGroup} spaces={groupSpaces(directoryGroup.id)} browse={browseFor(directoryGroup.id)} onBrowse={update=>browseGroup(directoryGroup.id,update)} onReveal={revealSpace} onOpen={enter} /> : help ? <><p>Right-click your hub or the canvas to add a space, Collection, Group, or Item. Click an expanded orb for details; click a small orb to expand it.</p><p>Double-click the main hub to collapse its children. Double-click a Space to expand or collapse its orbs. Right-click and choose Open canvas to enter it. Right-click for rename, color, move, and expand/collapse controls. Use the pencil icon on a Collection to edit its fields. Items inherit their space’s color.</p><p>Click a Group fan Space to expand it; double-click to expand or collapse its orbs. Click the fan arc to shrink or expand the fan. Use the arrows to page, the count for the directory, or the 12 o’clock search button to find a Space by name or field value. Drag the rounded arc beside its parent to move the connector anchor. Drag empty space or use two fingers to pan. Pinch or hold Command/Control while scrolling to zoom. Hold Command/Control while dragging an orb to move its children too.</p><p>Your organizer and attached files are saved only in this browser. Clearing site data removes them. AI is not connected yet.</p></> : flyout?.kind === 'skills' ? <SkillsEditor state={state} change={change} onDirty={onFlyoutDirty} /> : flyout?.kind === 'subset' ? <SubsetSchemaEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /> : flyout?.kind === 'entity' && state.nodes.some(n => n.id === flyout.parentId && n.kind === 'subset') ? <><UiButton onClick={() => edit(flyout)}>Edit name and color</UiButton><SubsetEntityEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /></> : flyout?.kind === 'collection' ? <CollectionEditor key={`${flyout.id}:${flyoutRecordId ?? 'schema'}`} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} recordId={flyoutRecordId} onRecordSaved={() => { flyoutDirty.current = false; setFlyoutId(null); setFlyoutRecordId(null) }} /> : flyout?.kind === 'item' ? <ItemEditor key={flyout.id} state={state} node={flyout} change={change} onDirty={onFlyoutDirty} /> : <><p>{'Customize this space from its context menu.'}</p>{flyout && <UiButton onClick={() => edit(flyout)}><Pencil size={15} />Edit {flyout.kind === 'user' ? 'profile' : 'space'}</UiButton>}</>}</div>
     </CanvasFloatingFlyoutFrame>
     <div className={`canvas-stage${focused ? ' is-prompt-active' : ''}`} ref={stage}>
-      <div className="canvas-scene"><canvas ref={canvas} tabIndex={-1} aria-label="Organizer canvas. Drag to pan; pinch to zoom. Right-click for actions. Use the Explore canvas navigation for keyboard access." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { pointers.current.clear(); drag.current = null; pinch.current = null; arcDrag.current = null; fanDrag.current=null; setFanRotations({}) }} onPointerLeave={() => { setHovered(null); setHoveredFan(null) }} onContextMenu={event => { event.preventDefault(); if (click.current) { clearTimeout(click.current.timer); click.current = null }; const node = hit({ x: event.clientX, y: event.clientY }); setMenu({ id: node?.id ?? null, x: Math.max(8, Math.min(event.clientX, viewport.width - 206)), y: Math.max(8, Math.min(event.clientY, viewport.height - (node ? 370 : 92))) }) }} style={{ cursor: hovered || hoveredFan ? 'pointer' : undefined }} />
+      <div className="canvas-scene"><canvas ref={canvas} tabIndex={-1} aria-label="Organizer canvas. Drag to pan; pinch to zoom. Right-click for actions. Use the Explore canvas navigation for keyboard access." onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { pointers.current.clear(); drag.current = null; pinch.current = null; arcDrag.current = null; pressedFan.current=null }} onPointerLeave={() => { setHovered(null); setHoveredFan(null) }} onContextMenu={event => { event.preventDefault(); if (click.current) { clearTimeout(click.current.timer); click.current = null }; const node = hit({ x: event.clientX, y: event.clientY }); setMenu({ id: node?.id ?? null, x: Math.max(8, Math.min(event.clientX, viewport.width - 206)), y: Math.max(8, Math.min(event.clientY, viewport.height - (node ? 370 : 92))) }) }} style={{ cursor: hovered || hoveredFan ? 'pointer' : undefined }} />
         <div className="canvas-symbols">{visuals.filter(v => v.radius > 1).map(v => { const Icon = v.node.kind === 'user' ? UserRound : v.node.kind === 'skills' ? Sparkles : v.node.kind === 'collection' ? List : v.node.kind === 'item' ? StickyNote : Layers3; return <span key={v.node.id} data-orb={v.node.id} className={`canvas-orb-symbol${hovered === v.node.id ? ' is-hovered' : ''}`} style={{ left: v.point.x, top: v.point.y, color: v.node.color }}><span className="canvas-orb-symbol-icon"><Icon size={Math.max(9, v.radius * .6)} strokeWidth={1.7} /></span></span> })}{fanOrbs.map(v => <span key={`fan:${v.node.id}`} data-fan-orb={v.node.id} className="canvas-orb-symbol" aria-hidden="true" style={{ left: v.point.x, top: v.point.y, width: v.radius * 2, height: v.radius * 2 }} />)}</div>
       </div>
       {fans.filter(fan=>fan.visual.progress>.5 && fan.reveal>.5 && fan.spread>.5).map(fan=>{const group=fan.visual.node,window=windowFor(group.id),geometry=fanGeometry(fan.slots,fan.reveal,fan.spread,fan.factor);return <div key={`browse:${group.id}`}>

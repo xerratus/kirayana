@@ -11,7 +11,3 @@ export function groupWindow(nodes: Node[], offset: number) {
   return { nodes:nodes.slice(start,start+groupPageSize), offset:start, end:Math.min(nodes.length,start+groupPageSize), total:nodes.length }
 }
 export function revealOffset(nodes: Node[], id: string) { return groupWindow(nodes,Math.floor(Math.max(0,nodes.findIndex(n=>n.id===id))/groupPageSize)*groupPageSize).offset }
-export function rotateGroupWindow(offset:number,total:number,angle:number) {
-  const step=Math.PI*2/23,steps=Math.round(-angle/step),positions=Math.max(1,total-groupPageSize+1)
-  return {offset:((offset+steps)%positions+positions)%positions,rotation:angle+steps*step}
-}

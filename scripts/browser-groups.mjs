@@ -36,19 +36,6 @@ try{
  const after=await page.locator(`[data-orb="${last.id}"]`).boundingBox()
  assert.ok(Math.abs(after.x-opened.x)<1 && Math.abs(after.y-opened.y)<1)
  assert.equal(await page.locator('[data-fan-orb]').count(),37)
- // Use the directory to center the Group, then drag the exposed outer rim clockwise.
- await page.getByRole('button',{name:'Search 451 Spaces Spaces',exact:true}).click()
- await page.getByRole('button',{name:'Reveal Space 200',exact:true}).click();await settle()
- await page.getByRole('button',{name:'Close side panel',exact:true}).click();await settle()
- const count=page.getByRole('button',{name:'Browse 451 Spaces: 451 Spaces',exact:true})
- const before=await count.innerText()
- const searchBounds=await page.getByRole('button',{name:'Search 451 Spaces Spaces',exact:true}).boundingBox()
- const hub=await page.locator(`[data-orb="${group.id}"]`).boundingBox()
- const cx=hub.x+hub.width/2,cy=hub.y+hub.height/2,radius=cy-(searchBounds.y+searchBounds.height/2)-8
- await page.mouse.move(cx-radius,cy);await page.mouse.down()
- for(let i=1;i<=12;i++){const a=Math.PI+.75*i/12;await page.mouse.move(cx+Math.cos(a)*radius,cy+Math.sin(a)*radius)}
- await page.mouse.up();await settle()
- assert.notEqual(await count.innerText(),await before)
  const cameraBefore=(await saved()).views[group.parentId].camera
  await page.locator('canvas').focus();await page.mouse.move(30,900);await page.mouse.wheel(0,30);await settle()
  const cameraAfter=(await saved()).views[group.parentId].camera
@@ -59,5 +46,5 @@ try{
  state=await saved();assert.equal(state.nodes.filter(n=>n.name==='451 Spaces').length,1)
  assert.equal(state.nodes.filter(n=>n.parentId===group.id).length,451)
  assert.deepEqual(errors,[])
- console.log('Browser passed: 451-Space fixture, two rows, search, final page, open Space position, rim drag, ordinary pan, and no duplicate fixture on reload.')
+ console.log('Browser passed: 451-Space fixture, two rows, search, final page, open Space position, ordinary pan, and no duplicate fixture on reload.')
 }finally{await context.close();await browser.close()}

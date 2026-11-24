@@ -7,7 +7,7 @@ export function useSceneAnimation(targets: Record<string, number>, focused: bool
   useEffect(() => {
     const next: Record<string, number> = { ...JSON.parse(key), focus: focused ? .94 : 1 }
     const from = { ...values.current }
-    for (const id in next) if (from[id] === undefined) from[id] = id.startsWith('fan-orb-angle:') ? -Math.PI/2 : id.startsWith('fan-orb-visible:') ? 0 : next[id]
+    for (const id in next) if (from[id] === undefined) from[id] = id.startsWith('fan-orb-angle:') ? -Math.PI/2 : id.startsWith('fan-orb-visible:') || id.startsWith('page-turn:') ? 0 : next[id]
     for(const id in next)if(id.startsWith('fan-orb-angle:') && (from[id.replace('fan-orb-angle:','fan-orb-visible:')]??0)<.001)from[id]=-Math.PI/2
     const start = performance.now()
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -16,7 +16,7 @@ export function useSceneAnimation(targets: Record<string, number>, focused: bool
       let moving = false
       for (const id in next) {
         const gradual = id.startsWith('depth:') || id.startsWith('hover:')
-        const duration = id === 'focus' ? 320 : gradual ? (id.startsWith('depth:') ? 130 : 90) * 6 : id.startsWith('fan:') || id.startsWith('spread:') ? 520 : 440
+        const duration = id.startsWith('page-turn:') ? 1100 : id === 'focus' ? 320 : gradual ? (id.startsWith('depth:') ? 130 : 90) * 6 : id.startsWith('fan:') || id.startsWith('spread:') ? 520 : 440
         const t = reduced ? 1 : Math.min(1, (now - start) / duration)
         const eased = t === 1 ? 1 : gradual ? 1 - Math.exp(-t * 6) : id === 'focus' ? 1 - Math.pow(1 - t, 3) : t * t * (3 - 2 * t)
         values.current[id] = from[id] + (next[id] - from[id]) * eased
