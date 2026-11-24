@@ -80,3 +80,14 @@ export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: Fan
   ctx.restore()
 }
 export function angleDistance(a: number, b: number) { return Math.abs(Math.atan2(Math.sin(a-b), Math.cos(a-b))) }
+
+/** Stack the label and pagination below the visible lower edge of a Group. */
+export function groupLabelLayout(orbRadius:number,geometry:ReturnType<typeof fanGeometry>,textScale:number,hasFan=true) {
+ const reachesBottom=geometry.start<=Math.PI/2 && geometry.end>=Math.PI/2
+ const bottom=hasFan ? geometry.outer*(reachesBottom ? 1 : Math.max(Math.sin(geometry.start),Math.sin(geometry.end))) : 0
+ const edge=Math.max(orbRadius,bottom), gap=14*textScale
+ const titleSize=Math.max(9,15*textScale), subtitleSize=Math.max(8,12*textScale)
+ const title=edge+gap+titleSize/2
+ const subtitle=title+titleSize/2+8*textScale+subtitleSize/2
+ return {title,subtitle,pagination:subtitle+subtitleSize/2+gap}
+}

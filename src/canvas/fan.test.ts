@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { fanGeometry, fanSlots } from './fan'
+import { fanGeometry, groupLabelLayout, fanSlots } from './fan'
 import { addNode, initialOrganizer } from '../organizer/model'
 it('caps the fan at 360 degrees, keeps one row',()=>{
  let s=initialOrganizer();for(let i=0;i<40;i++)s=addNode(s,s.rootId,'entity',`Space ${i}`,'#4c9df4',{x:0,y:0})
@@ -53,4 +53,16 @@ it('caps even 500 Spaces at one row with clearance across the 12 o’clock seam'
   expect(Math.hypot(Math.cos(a.angle)*a.radius-Math.cos(b.angle)*b.radius,Math.sin(a.angle)*a.radius-Math.sin(b.angle)*b.radius)).toBeGreaterThan(a.orbRadius+b.orbRadius+4)
  }
  expect(Number.isFinite(fanGeometry([],1,1,1).outer)).toBe(true)
+})
+
+it('stacks Group labels and pagination below the fan with consistent gaps',()=>{
+ const template=initialOrganizer().nodes[0],nodes=Array.from({length:14},(_,i)=>({...template,id:`s${i}`}))
+ const slots=fanSlots(nodes)
+ const closed=groupLabelLayout(90,fanGeometry(slots,1,0,1),1)
+ const open=groupLabelLayout(90,fanGeometry(slots,1,1,1),1)
+ expect(open.title).toBeGreaterThan(closed.title)
+ expect(open.title-7.5-fanGeometry(slots,1,1,1).outer).toBe(14)
+ expect(open.pagination-open.subtitle-6).toBe(14)
+ const small=groupLabelLayout(90,fanGeometry(slots.slice(0,1),1,1,1),1)
+ expect(small.title).toBe(90+14+7.5)
 })

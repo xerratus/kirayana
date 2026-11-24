@@ -21,7 +21,7 @@ import { CanvasLeftFloatingFlyoutFrame } from './CanvasLeftFloatingFlyout'
 import { CanvasFloatingFlyoutFrame } from './CanvasFloatingFlyout'
 import { drawBackground } from './background'
 import { drawOrb, drawProjectCone, orbitPoint } from './drawing'
-import { fanSlots, fanGeometry, drawFan, angleDistance } from './fan'
+import { fanSlots, fanGeometry, groupLabelLayout, drawFan, angleDistance } from './fan'
 import { CollectionEditor, CollectionList, ItemEditor, RecordSummary, kindLabel, recordTitle } from '../organizer/OrganizerContent'
 import { useSceneAnimation } from './useSceneAnimation'
 import { GroupDirectory } from './GroupDirectory'
@@ -173,6 +173,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     visuals.push({ node, point, progress, depth, radius: (isRoot ? 100 : node.kind === 'item' ? 17 * parentReveal : expandedHub ? 72 * parentReveal * hubReveal : (17 + ((node.kind === 'subset' ? 50 + 40 * fan : 50) - 17) * progress) * parentReveal) * scale * focus * depth })
   }
   const fans = visuals.filter(v => v.node.kind === 'subset').map(v => ({ visual: v, slots: fanSlotsFor(v.node.id), reveal: animation[`fan:${v.node.id}`] ?? 1, spread: animation[`spread:${v.node.id}`] ?? 1, factor: scale * focus * v.depth }))
+  const groupLabels=new Map(fans.map(fan=>[fan.visual.node.id,groupLabelLayout(fan.visual.radius,fanGeometry(fan.slots,fan.reveal,fan.spread,fan.factor),camera.zoom*fan.visual.depth,fan.slots.length>0)]))
   const fanOrbs = fans.flatMap(fan => {
     const turn=pageTurns[fan.visual.node.id], progress=turn ? animation[`page-turn:${fan.visual.node.id}:${turn.serial}:${turn.duration}`]??0 : 1
     const turning=Boolean(turn && progress<1)
@@ -422,9 +423,9 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       const main = v.node.id === root.id, depth = v.depth
       ctx.globalAlpha = main ? 1 : v.progress
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#edf5ff'; ctx.font = `${main ? 700 : 650} ${Math.max(9, (main ? 17 : 15) * camera.zoom * depth)}px sans-serif`
-      ctx.fillText(v.node.name, v.point.x, v.point.y + v.radius + 28 * camera.zoom * depth)
+      ctx.fillText(v.node.name, v.point.x, v.point.y + (groupLabels.get(v.node.id)?.title ?? v.radius + 28 * camera.zoom * depth))
       ctx.fillStyle = '#9bb0cb'; ctx.font = `${Math.max(8, (main ? 10.5 : 12) * camera.zoom * depth)}px sans-serif`
-      ctx.fillText(main ? (root.kind === 'user' ? 'Your organizer' : 'Space') : v.node.kind === 'skills' ? 'Personalize your experience' : kindLabel(v.node), v.point.x, v.point.y + v.radius + (main ? 50 : 49) * camera.zoom * depth)
+      ctx.fillText(main ? (root.kind === 'user' ? 'Your organizer' : 'Space') : v.node.kind === 'skills' ? 'Personalize your experience' : kindLabel(v.node), v.point.x, v.point.y + (groupLabels.get(v.node.id)?.subtitle ?? v.radius + (main ? 50 : 49) * camera.zoom * depth))
       ctx.globalAlpha = 1
     }
     for (const orb of fanOrbs) {
@@ -582,7 +583,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       </div>
       {fans.filter(fan=>fan.visual.progress>.5 && fan.reveal>.5 && fan.spread>.5).map(fan=>{const group=fan.visual.node,window=windowFor(group.id),geometry=fanGeometry(fan.slots,fan.reveal,fan.spread,fan.factor);return <div key={`browse:${group.id}`}>
         <div className="kirayana-group-search" style={{left:fan.visual.point.x,top:fan.visual.point.y-geometry.outer,'--group-color':group.color} as CSSProperties}><UiIconButton label={`Search ${group.name} Spaces`} onClick={()=>openGroupDirectory(group.id)}><Search size={14}/></UiIconButton></div>
-        {window.total>groupPageSize && <div className="kirayana-group-controls" role="group" aria-label={`${group.name} navigation`} style={{left:fan.visual.point.x,top:fan.visual.point.y+geometry.outer+16,'--group-color':group.color} as CSSProperties}>
+        {window.total>groupPageSize && <div className="kirayana-group-controls" role="group" aria-label={`${group.name} navigation`} style={{left:fan.visual.point.x,top:fan.visual.point.y+groupLabels.get(group.id)!.pagination,'--group-color':group.color} as CSSProperties}>
           <UiIconButton label={`Previous ${group.name} Spaces`} disabled={!window.offset} onClick={()=>browseGroup(group.id,{offset:window.offset-groupPageSize})}><ChevronLeft size={15}/></UiIconButton>
           <button className="ui-icon-action kirayana-group-count" onClick={()=>openGroupDirectory(group.id)} aria-label={`Browse ${group.name}: ${window.total} Spaces`}>{window.total ? `${window.offset+1}–${window.end}` : '0'} / {window.total}</button>
           <UiIconButton label={`Next ${group.name} Spaces`} disabled={window.end===window.total} onClick={()=>browseGroup(group.id,{offset:window.offset+groupPageSize})}><ChevronRight size={15}/></UiIconButton>
