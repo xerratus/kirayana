@@ -72,3 +72,6 @@
 .kirayana-task-row.is-completed strong{text-decoration:line-through;color:var(--muted)}
 .kirayana-tasks-empty,.kirayana-tasks>p{margin:8px 18px;color:var(--muted);font-size:12px}
 @media(hover:none){.kirayana-task-actions{opacity:1;pointer-events:auto}}
+
+.canvas-detail-results>.kirayana-task-row.is-collapsing{overflow:hidden;padding-top:0;padding-bottom:0;border-top-width:0;opacity:0;transition:height 300ms ease,padding 300ms ease,border-width 300ms ease,opacity 300ms ease}
+@media(prefers-reduced-motion:reduce){.canvas-detail-results>.kirayana-task-row.is-collapsing{transition:none}}
