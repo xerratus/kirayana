@@ -23,3 +23,19 @@ export function seedServersFan(state: Organizer): Organizer {
   }
   return { ...next, revision: state.revision + 1, completedFixtures: [...state.completedFixtures ?? [], fixture] }
 }
+
+/** User-requested large Group; seeded once in development without replacing existing content. */
+export function seedLargeGroup(state: Organizer): Organizer {
+  const marker='large-group-451-v1'
+  if(state.completedFixtures?.includes(marker))return state
+  let next=addNode(state,state.rootId,'subset','451 Spaces','#5ac3dc',{x:420,y:200})
+  const group=next.nodes.at(-1)!
+  next={...next,nodes:next.nodes.map(n=>n.id===group.id ? {...n,itemLabel:'Space'} : n)}
+  const start=Date.now()
+  for(let i=1;i<=451;i++){
+    next=addNode(next,group.id,'entity',`Space ${String(i).padStart(3,'0')}`,palette[(i-1)%palette.length],{x:group.position.x+300,y:group.position.y})
+    const node=next.nodes.at(-1)!
+    next={...next,nodes:next.nodes.map(n=>n.id===node.id ? {...n,createdAt:new Date(start+i).toISOString()} : n)}
+  }
+  return {...next,completedFixtures:[...next.completedFixtures??[],marker]}
+}

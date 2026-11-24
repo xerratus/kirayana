@@ -11,3 +11,15 @@ it('adds 25 demo Spaces to existing Servers once, preserving existing data', () 
   expect(next.nodes.find(n => n.name === 'Existing server')).toEqual(state.nodes.at(-1))
   expect(seedServersFan(next)).toBe(next); expect(next.views).toEqual(state.views); assertOrganizer(next)
 })
+
+it('adds the requested 451-Space Group once and never recreates it after deletion',async()=>{
+ const {seedLargeGroup}=await import('./developmentFixtures')
+ const original=initialOrganizer(),next=seedLargeGroup(original)
+ const group=next.nodes.find(n=>n.name==='451 Spaces')!
+ expect(next.nodes.filter(n=>n.parentId===group.id)).toHaveLength(451)
+ expect(next.nodes.find(n=>n.id===original.rootId)).toEqual(original.nodes[0])
+ expect(seedLargeGroup(next)).toBe(next)
+ assertOrganizer(next)
+ const deleted={...next,nodes:next.nodes.filter(n=>n.id!==group.id && n.parentId!==group.id)}
+ expect(seedLargeGroup(deleted)).toBe(deleted)
+})

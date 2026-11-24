@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { seedServersFan } from '../organizer/developmentFixtures'
+import { seedServersFan, seedLargeGroup } from '../organizer/developmentFixtures'
 import { brand } from './brand'
 import { CanvasWorkspace } from '../canvas/CanvasWorkspace'
 import { initialOrganizer, type Organizer } from '../organizer/model'
@@ -17,7 +17,7 @@ export function App() {
       const repo = createLocalRepository(); repository.current = repo
       void repo.load().then(async saved => {
         const base = saved ?? initialOrganizer()
-        const current = import.meta.env.DEV ? seedServersFan(base) : base
+        const current = import.meta.env.DEV ? seedLargeGroup(seedServersFan(base)) : base
         if (!saved || current !== saved) await repo.save(current)
         if (active) { setState(current); setStatus('Saved in this browser') }
       }).catch(cause => { if (active) { setError(String(cause)); setStatus('Storage unavailable') } })

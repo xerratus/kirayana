@@ -10,7 +10,7 @@ export const projectFanMaxSpan = Math.PI * 2
 export const projectFanRowGap = 10
 export function fanSlots(projects: Node[]): FanSlot[] {
   let ring = 0, column = 0, radius = 124
-  return projects.map(project => {
+  return projects.slice(0, 37).map(project => {
     const orbRadius = Math.max(9, projectFanOrbRadius * .88 ** ring)
     const capacity = Math.max(5, Math.floor((projectFanMaxSpan - 2 * projectFanEdgePadding) * radius / (orbRadius * 2 + 6)))
     const step = (projectFanMaxSpan - 2 * projectFanEdgePadding) / capacity
@@ -50,7 +50,7 @@ export function drawFanLabel(ctx: CanvasRenderingContext2D, center: Point, radiu
 
 export function fanGeometry(slots: FanSlot[], reveal: number, spread: number, factor: number) {
   const inner = (50 + 40 * reveal) * factor
-  const outerRadius = projectFanCollapsedOuter + (Math.max(...slots.map(slot => slot.outer)) - projectFanCollapsedOuter) * spread
+  const outerRadius = projectFanCollapsedOuter + ((slots.length ? Math.max(...slots.map(slot => slot.outer)) : projectFanCollapsedOuter) - projectFanCollapsedOuter) * spread
   const outer = (50 + (outerRadius - 50) * reveal) * factor
   return { inner, outer, start: projectFanStart, end: Math.min(projectFanStart + projectFanMaxSpan, Math.max(projectFanStart, ...slots.map(slot => slot.end)) + projectFanEdgePadding) }
 }

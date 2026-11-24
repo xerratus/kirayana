@@ -7,7 +7,8 @@ export function useSceneAnimation(targets: Record<string, number>, focused: bool
   useEffect(() => {
     const next: Record<string, number> = { ...JSON.parse(key), focus: focused ? .94 : 1 }
     const from = { ...values.current }
-    for (const id in next) if (from[id] === undefined) from[id] = next[id]
+    for (const id in next) if (from[id] === undefined) from[id] = id.startsWith('fan-orb-angle:') ? -Math.PI/2 : id.startsWith('fan-orb-visible:') ? 0 : next[id]
+    for(const id in next)if(id.startsWith('fan-orb-angle:') && (from[id.replace('fan-orb-angle:','fan-orb-visible:')]??0)<.001)from[id]=-Math.PI/2
     const start = performance.now()
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     let raf = 0

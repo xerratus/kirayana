@@ -9,10 +9,9 @@ it('caps the fan at 360 degrees, adds radial rows, and shrinks outer orbs',()=>{
  expect(open.end-open.start).toBe(closed.end-closed.start)
  expect(closed.outer).toBe(105)
  const rows = [...new Map(slots.map(slot => [slot.ring, slot])).values()]
- expect(rows).toHaveLength(3)
+ expect(rows).toHaveLength(2)
  expect(rows[1].radius).toBeGreaterThan(rows[0].radius)
  expect(rows[1].orbRadius).toBeLessThan(rows[0].orbRadius)
- expect(rows[2].orbRadius).toBeLessThan(rows[1].orbRadius)
  for(let i=1;i<rows.length;i++)expect(rows[i].radius-rows[i-1].radius-rows[i].orbRadius-rows[i-1].orbRadius).toBeCloseTo(projectFanRowGap)
  for(const slot of slots) expect(slot.end).toBeLessThanOrEqual(-Math.PI/2+Math.PI*2)
  for(let i=0;i<slots.length;i++)for(let j=i+1;j<slots.length;j++){
@@ -43,17 +42,18 @@ it('fills a full clockwise circle before adding an outer row',()=>{
  expect(geometry.end).toBeCloseTo(Math.PI*3/2)
 })
 
-it('fits 167 spaces across five shrinking rows, keeping clearance across the 12 o’clock seam',()=>{
+it('caps even 500 Spaces at two rows with clearance across the 12 o’clock seam',()=>{
  const template=initialOrganizer().nodes[0]
- const nodes=Array.from({length:168},(_,i)=>({...template,id:`space-${i}`,kind:'entity' as const,name:`Space ${i}`}))
+ const nodes=Array.from({length:500},(_,i)=>({...template,id:`space-${i}`,kind:'entity' as const,name:`Space ${i}`}))
  const slots=fanSlots(nodes)
- expect([0,1,2,3,4].map(ring=>slots.filter(slot=>slot.ring===ring).length)).toEqual([14,23,32,43,55])
- expect(slots[167].ring).toBe(5)
- const geometry=fanGeometry(slots.slice(0,167),1,1,1)
+ expect(slots).toHaveLength(37)
+ expect([0,1].map(ring=>slots.filter(slot=>slot.ring===ring).length)).toEqual([14,23])
+ const geometry=fanGeometry(slots,1,1,1)
  expect(geometry.start).toBeCloseTo(-Math.PI/2)
  expect(geometry.end-geometry.start).toBeCloseTo(Math.PI*2)
- for(let i=0;i<167;i++)for(let j=i+1;j<167;j++){
+ for(let i=0;i<37;i++)for(let j=i+1;j<37;j++){
   const a=slots[i],b=slots[j]
   expect(Math.hypot(Math.cos(a.angle)*a.radius-Math.cos(b.angle)*b.radius,Math.sin(a.angle)*a.radius-Math.sin(b.angle)*b.radius)).toBeGreaterThan(a.orbRadius+b.orbRadius+4)
  }
+ expect(Number.isFinite(fanGeometry([],1,1,1).outer)).toBe(true)
 })
