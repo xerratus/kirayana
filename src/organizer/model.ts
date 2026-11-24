@@ -1,7 +1,7 @@
 import { defaultArcSpacing, pushArcAngles } from '../canvas/arcSpacing'
 import { initialCamera, type Camera, type Point } from '../canvas/canvasCamera'
 
-export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item'; name: string; color: string; position: Point; collapsed: boolean; itemLabel?: string; values?: Record<string, FieldValue>; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
+export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item'; name: string; color: string; position: Point; fanPositioned?: boolean; collapsed: boolean; itemLabel?: string; values?: Record<string, FieldValue>; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
 export type View = { camera: Camera; panels: Record<string, Point>; openPanels: string[]; expandedEntities?: string[]; subPositions?: Record<string, Point>; selectedRecords?: Record<string, string> }
 export type LocalAttachment = { id: string; name: string; size: number; blob: Blob }
 export type Organizer = { completedFixtures?: string[]; schemaVersion: 3; skills: Skill[]; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
@@ -33,7 +33,7 @@ export function updateNode(state: Organizer, id: string, patch: Partial<Pick<Nod
   if (patch.name !== undefined) patch = { ...patch, name: validateName(patch.name) }
   if (patch.color !== undefined) patch = { ...patch, color: validateColor(patch.color) }
   if (patch.position && (!Number.isFinite(patch.position.x) || !Number.isFinite(patch.position.y))) throw new Error('Invalid position.')
-  return { ...state, nodes: state.nodes.map(node => node.id === id ? { ...node, ...patch, updatedAt: new Date().toISOString() } : node) }
+  return { ...state, nodes: state.nodes.map(node => node.id === id ? { ...node, ...patch, ...(patch.position ? {fanPositioned:true} : {}), updatedAt: new Date().toISOString() } : node) }
 }
 export function addEntity(state: Organizer, parentId: string, name: string, color: string, position: Point): Organizer {
   return addNode(state, parentId, 'entity', name, color, position)
