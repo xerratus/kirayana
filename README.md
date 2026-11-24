@@ -70,3 +70,5 @@ Open **Skills → Manage skills** to add a name, unique slash command, descripti
 Phase 3 browser checks: `node scripts/browser-phase3.mjs`. See [artifacts/PHASE_3.md](artifacts/PHASE_3.md).
 
 Groups define shared fields at creation (Name is always required). Set a singular item label, such as “website” for Websites, to customize Add actions. Edit fields from the Group’s context menu or detail panel. Each space stores its own values; schema renames preserve them, and incompatible changes/deletion require confirmation. Nested canvases remain available inside those spaces.
+
+Group fans fill clockwise from 12 o’clock up to a full 360° ring, retaining the 12 o’clock radial separator. Outer rows shrink orbs by 12% per row (minimum radius 9), with 10 units of clear radial gap. The first five rows fit 14, 23, 32, 43, and 55 Spaces respectively: 167 total.

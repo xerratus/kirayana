@@ -6,7 +6,7 @@ export const projectFanStep = .49
 export const projectFanEdgePadding = .1
 export const projectFanCollapsedOuter = 105
 export const projectFanOrbRadius = 23
-export const projectFanMaxSpan = Math.PI * 3 / 2
+export const projectFanMaxSpan = Math.PI * 2
 export const projectFanRowGap = 10
 export function fanSlots(projects: Node[]): FanSlot[] {
   let ring = 0, column = 0, radius = 124
@@ -58,6 +58,7 @@ export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: Fan
   if (!slots.length || reveal <= 0 || opacity <= 0) return
   const { inner, outer, start, end } = fanGeometry(slots, reveal, spread, factor)
   const fanPath = new Path2D()
+  // Keep the radial edge at 12 o’clock, including when the ring reaches 360°.
   fanPath.moveTo(center.x + Math.cos(start) * inner, center.y + Math.sin(start) * inner)
   fanPath.lineTo(center.x + Math.cos(start) * outer, center.y + Math.sin(start) * outer)
   fanPath.arc(center.x, center.y, outer, start, end)
