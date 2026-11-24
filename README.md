@@ -49,7 +49,9 @@ node scripts/browser-smoke.mjs
 
 ## Phase 2 organizer features
 
-Right-click a user/space hub to create a Collection, Group, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
+Right-click a user/space hub to create a Collection, Tasks list, Group, or Item. Collections have editable fields (text, long text, number, date, checkbox, and single-select), required validation, searchable records, linked record details, and right-side editing. Field renames keep values. Field deletion and incompatible conversions require explicit confirmation.
+
+Tasks lists support quick task entry, completion, restore, and deletion. Check and trash controls appear on row hover or keyboard focus (always visible on touch screens). Completed tasks hide by default; Show completed reveals them. Tasks persist in local storage and full backups. Use `/tasks Name` or Add Tasks from a hub’s context menu. Browser flow check: `node scripts/browser-tasks.mjs` with the dev server running and `PLAYWRIGHT_MODULE` set when needed.
 
 Groups reuse the source fan and curved connector. Add spaces to a Group, click its arc to collapse/expand, and drag the rounded parent anchor to reposition the connector. Click a fa space to expand its hub, or use its right-click Open canvas action to enter. Nested spaces can contain their own lists, groups, and items. Context menus support validated moves and prevent cycles.
 

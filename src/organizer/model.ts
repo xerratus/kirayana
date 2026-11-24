@@ -1,7 +1,8 @@
 import { defaultArcSpacing, pushArcAngles } from '../canvas/arcSpacing'
 import { initialCamera, type Camera, type Point } from '../canvas/canvasCamera'
 
-export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item'; name: string; color: string; position: Point; fanPositioned?: boolean; fanAnchor?: { angle:number; radius:number; orbRadius:number }; collapsed: boolean; itemLabel?: string; values?: Record<string, FieldValue>; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
+export type Node = { id: string; parentId: string | null; kind: 'user' | 'entity' | 'skills' | 'collection' | 'subset' | 'item' | 'tasks'; name: string; color: string; position: Point; fanPositioned?: boolean; fanAnchor?: { angle:number; radius:number; orbRadius:number }; collapsed: boolean; tasks?: Task[]; itemLabel?: string; values?: Record<string, FieldValue>; anchorAngle?: number; fanOpen?: boolean; fanCollapsed?: boolean; createdAt: string; updatedAt: string }
+export type Task = { id:string; title:string; completed:boolean; createdAt:string }
 export type View = { camera: Camera; panels: Record<string, Point>; openPanels: string[]; expandedEntities?: string[]; subPositions?: Record<string, Point>; selectedRecords?: Record<string, string> }
 export type LocalAttachment = { id: string; name: string; size: number; blob: Blob }
 export type Organizer = { completedFixtures?: string[]; schemaVersion: 3; skills: Skill[]; fields: Field[]; records: CollectionRecord[]; items: Record<string, string>; revision: number; rootId: string; viewId: string; nodes: Node[]; views: Record<string, View>; attachments: LocalAttachment[] }
@@ -38,10 +39,10 @@ export function updateNode(state: Organizer, id: string, patch: Partial<Pick<Nod
 export function addEntity(state: Organizer, parentId: string, name: string, color: string, position: Point): Organizer {
   return addNode(state, parentId, 'entity', name, color, position)
 }
-export function addNode(state: Organizer, parentId: string, kind: 'entity' | 'collection' | 'subset' | 'item', name: string, color: string, position: Point): Organizer {
+export function addNode(state: Organizer, parentId: string, kind: 'entity' | 'collection' | 'subset' | 'item' | 'tasks', name: string, color: string, position: Point): Organizer {
   const parent = state.nodes.find(node => node.id === parentId)
   if (!parent || !['user','entity','subset'].includes(parent.kind) || (parent.kind === 'subset' && kind !== 'entity')) throw new Error('Choose a space or user hub.')
-  if (!['entity','collection','subset','item'].includes(kind)) throw new Error('Invalid branch type.')
+  if (!['entity','collection','subset','item','tasks'].includes(kind)) throw new Error('Invalid branch type.')
   const node: Node = { id: crypto.randomUUID(), parentId, kind, anchorAngle: kind === 'subset' ? -Math.PI / 3 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'subset').length * .8 : kind === 'item' ? Math.PI / 4 + state.nodes.filter(n => n.parentId === parentId && n.kind === 'item').length * .7 : -Math.PI / 3, fanOpen: kind === 'subset', fanCollapsed: false, name: validateName(name), color: validateColor(color), position, collapsed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
   if (kind === 'subset') {
     const siblings = [...state.nodes.filter(n => n.kind === 'subset' && n.parentId === parentId), node]
@@ -68,7 +69,8 @@ export function assertOrganizer(value: unknown): asserts value is Organizer {
     validateName(node.name); validateColor(node.color)
     if (node.itemLabel !== undefined) validateName(node.itemLabel)
     if (node.values) validateFieldValues(s.fields.filter(f => f.collectionId === node.parentId).map(f => ({ ...f, required: false })), node.values)
-    if (!['user', 'entity', 'skills', 'collection', 'subset', 'item'].includes(node.kind) || !Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) throw new Error('Invalid saved space.')
+    if (!['user', 'entity', 'skills', 'collection', 'subset', 'item', 'tasks'].includes(node.kind) || !Number.isFinite(node.position.x) || !Number.isFinite(node.position.y)) throw new Error('Invalid saved space.')
+    if(node.tasks!==undefined && (node.kind!=='tasks' || !Array.isArray(node.tasks) || new Set(node.tasks.map(task=>task.id)).size!==node.tasks.length || node.tasks.some(task=>typeof task.id!=='string' || typeof task.title!=='string' || !task.title.trim() || task.title.length>280 || typeof task.completed!=='boolean' || typeof task.createdAt!=='string')))throw new Error('Invalid saved tasks.')
     const owner = node.parentId ? s.nodes.find(n => n.id === node.parentId) : undefined
     if (node.anchorAngle !== undefined && !Number.isFinite(node.anchorAngle)) throw new Error('Invalid anchor angle.')
     const visited = new Set([node.id]); let parent = node.parentId

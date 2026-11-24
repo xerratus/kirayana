@@ -62,3 +62,13 @@
 .kirayana-group-controls .kirayana-group-count{width:auto;height:25px}.kirayana-group-result .kirayana-group-reveal{width:auto;height:auto;justify-content:flex-start}.kirayana-group-result .kirayana-group-reveal:hover{background:var(--hover)}.kirayana-group-tooltip{position:absolute;z-index:7;transform:translate(-50%,-100%);padding:6px 9px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--text);font-size:12px;pointer-events:none;white-space:nowrap}
 
 .kirayana-group-result .kirayana-group-reveal strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kirayana-group-result .kirayana-group-reveal>svg{flex-shrink:0}.kirayana-group-results{overscroll-behavior:contain;overflow-anchor:none}
+/* Tasks share Collection search, row, header, and icon styles. */
+.canvas-inspector-list:has(> .kirayana-tasks){margin-inline:-18px;padding-bottom:8px}
+.kirayana-tasks,.canvas-inspector-list>.kirayana-tasks{display:block;padding:0;border:0}
+.kirayana-task-add{display:block;margin:0}
+.kirayana-task-toggle{margin:0 18px 10px}
+.kirayana-task-actions{display:flex;flex-shrink:0;opacity:0;pointer-events:none}
+.kirayana-task-row:hover .kirayana-task-actions,.kirayana-task-row:focus-within .kirayana-task-actions{opacity:1;pointer-events:auto}
+.kirayana-task-row.is-completed strong{text-decoration:line-through;color:var(--muted)}
+.kirayana-tasks-empty,.kirayana-tasks>p{margin:8px 18px;color:var(--muted);font-size:12px}
+@media(hover:none){.kirayana-task-actions{opacity:1;pointer-events:auto}}

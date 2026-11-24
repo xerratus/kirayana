@@ -2,6 +2,7 @@ import { avoidCanvasCollisions } from '../canvas/canvasInspector'
 import { addNode, updateNode, moveNode, addField, saveRecord, saveSkill, palette, type Organizer, type Field, type FieldValue, type Skill } from './model'
 export const actions = [
   { command: 'space', hint: 'Name', description: 'Create a space' },
+  { command: 'tasks', hint: 'Name', description: 'Create a task list' },
   { command: 'collection', hint: 'Name', description: 'Create a Collection' },
   { command: 'group', hint: 'Name', description: 'Create a Group' },
   { command: 'item', hint: 'Name', description: 'Create an Item' },
@@ -25,7 +26,7 @@ export function runAction(state: Organizer, input: string, parentId = state.view
   if (!match) throw new Error('Use / to browse local actions. AI is not connected yet; attached files have not been analyzed.')
   const [, requestedCommand, args] = match
   const command = requestedCommand === 'group' ? 'subset' : requestedCommand === 'space' ? 'entity' : requestedCommand
-  if (['entity','collection','subset','item'].includes(command)) {
+  if (['entity','collection','subset','item','tasks'].includes(command)) {
     const parent = state.nodes.find(n => n.id === parentId)!
     const count = state.nodes.filter(n => n.parentId === parentId).length, angle = -Math.PI / 2 + count * .9
     const preferred = { x: parent.position.x + Math.cos(angle) * 280 - 65, y: parent.position.y + Math.sin(angle) * 280 - 65, width: 130, height: 130 }

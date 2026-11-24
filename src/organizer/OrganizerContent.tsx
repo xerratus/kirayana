@@ -5,7 +5,7 @@ import { UiButton, UiIconButton } from '../ui/Controls'
 import { CanvasDetailList } from '../canvas/CanvasDetailList'
 import { addField, editField, removeField, saveRecord, type CollectionRecord, type Field, type FieldType, type FieldValue, type Node, type Organizer } from './model'
 export type Change = (update: (state: Organizer) => Organizer) => void
-export const kindLabel = (node: Node) => ({ user: 'Your organizer', entity: 'Space', skills: 'Personal skills', collection: 'Collection', subset: 'Group', item: 'Item' })[node.kind]
+export const kindLabel = (node: Node) => ({ user: 'Your organizer', entity: 'Space', skills: 'Personal skills', collection: 'Collection', tasks: 'Tasks', subset: 'Group', item: 'Item' })[node.kind]
 export function recordTitle(state: Organizer, record: CollectionRecord) {
   const fields = state.fields.filter(f => f.collectionId === record.collectionId)
   const value = fields.map(f => record.values[f.id]).find(v => v !== undefined && v !== '')
