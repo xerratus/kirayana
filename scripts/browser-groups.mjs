@@ -5,7 +5,7 @@ const context=await browser.newContext({viewport:{width:1440,height:1000}})
 const page=await context.newPage(),errors=[]
 page.on('pageerror',e=>errors.push(e.message))
 const saved=()=>page.evaluate(()=>new Promise(resolve=>{const r=indexedDB.open('kirayana-organizer',1);r.onsuccess=()=>{const db=r.result,q=db.transaction('organizer').objectStore('organizer').get('current');q.onsuccess=()=>{db.close();resolve(q.result)}}}))
-const settle=()=>page.waitForTimeout(800)
+const settle=()=>page.waitForTimeout(1300)
 try{
  await page.goto('http://127.0.0.1:5180/')
  await page.getByRole('button',{name:'Search 451 Spaces Spaces',exact:true}).waitFor()
@@ -21,7 +21,7 @@ try{
  let last=state.nodes.find(n=>n.parentId===group.id&&n.name==='Space 451')
  assert.equal(await page.locator(`[data-fan-orb="${last.id}"]`).count(),1)
  await search.fill('');await page.getByRole('combobox',{name:'Sort',exact:true}).selectOption('name');await settle()
- await page.getByRole('slider',{name:'Fan position',exact:true}).fill('414');await settle()
+ await page.getByRole('button',{name:'Reveal Space 451',exact:true}).click();await settle()
  await page.getByRole('button',{name:'Close side panel',exact:true}).click();await settle()
  assert.equal(await page.getByRole('button',{name:'Browse 451 Spaces: 451 Spaces',exact:true}).innerText(),'415–451 / 451')
  // Expand the final Space and verify that paging preserves its world location.

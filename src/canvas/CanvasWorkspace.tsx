@@ -58,7 +58,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   const [groupBrowsing, setGroupBrowsing] = useState<Record<string, GroupBrowse>>({})
   const [groupDirectoryId, setGroupDirectoryId] = useState<string | null>(null)
   const [highlightSpace, setHighlightSpace] = useState<string | null>(null)
-  const [pageTurns,setPageTurns]=useState<Record<string,{from:ReturnType<typeof fanSlots>;to:ReturnType<typeof fanSlots>;direction:number;serial:number}>>({})
+  const [pageTurns,setPageTurns]=useState<Record<string,{from:ReturnType<typeof fanSlots>;to:ReturnType<typeof fanSlots>;direction:number;serial:number;duration:number}>>({})
   const pageSerial=useRef(0)
   const pressedFan=useRef<string|null>(null)
   const retiringFanSlots = useRef(new Map<string, ReturnType<typeof fanSlots>>())
@@ -96,7 +96,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     const changed=before.nodes.map(node=>node.id).join()!==after.nodes.map(node=>node.id).join()
     if(changed) {
       const direction=update.query!==undefined ? after.total>=before.total ? 1 : -1 : after.offset>before.offset ? -1 : 1
-      setPageTurns(current=>({...current,[id]:{from:fanSlots(before.nodes),to:fanSlots(after.nodes),direction,serial:++pageSerial.current}}))
+      setPageTurns(current=>({...current,[id]:{from:fanSlots(before.nodes),to:fanSlots(after.nodes),direction,serial:++pageSerial.current,duration:update.query!==undefined ? 500 : 1000}}))
     }
     setGroupBrowsing(current=>({...current,[`${root.id}:${id}`]:{...current[`${root.id}:${id}`]??initialGroupBrowse,...update}}))
   }
@@ -117,7 +117,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     retiringFanSlots.current.set(group.id,[...slots,...retired])
     for(const slot of retired) { targets[`fan-orb-angle:${slot.project.id}`]=-Math.PI/2; targets[`fan-orb-radius:${slot.project.id}`]=slot.radius; targets[`fan-orb-visible:${slot.project.id}`]=0 }
     const pageTurn=pageTurns[group.id]
-    if(pageTurn)targets[`page-turn:${group.id}:${pageTurn.serial}`]=1
+    if(pageTurn)targets[`page-turn:${group.id}:${pageTurn.serial}:${pageTurn.duration}`]=1
     for(const slot of fanSlotsFor(group.id)) { targets[`fan-orb-visible:${slot.project.id}`]=1; targets[`fan-orb-angle:${slot.project.id}`]=slot.angle; targets[`fan-orb-radius:${slot.project.id}`]=slot.radius }
   }
   const { values: animation } = useSceneAnimation(targets, focused)
@@ -161,7 +161,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
   }
   const fans = visuals.filter(v => v.node.kind === 'subset').map(v => ({ visual: v, slots: fanSlotsFor(v.node.id), reveal: animation[`fan:${v.node.id}`] ?? 1, spread: animation[`spread:${v.node.id}`] ?? 1, factor: scale * focus * v.depth }))
   const fanOrbs = fans.flatMap(fan => {
-    const turn=pageTurns[fan.visual.node.id], progress=turn ? animation[`page-turn:${fan.visual.node.id}:${turn.serial}`]??0 : 1
+    const turn=pageTurns[fan.visual.node.id], progress=turn ? animation[`page-turn:${fan.visual.node.id}:${turn.serial}:${turn.duration}`]??0 : 1
     const turning=Boolean(turn && progress<1)
     const incoming=new Set(turn?.to.map(slot=>slot.project.id))
     const slots=turning ? [...turn!.from.filter(slot=>!incoming.has(slot.project.id)),...turn!.to] : turn ? fan.slots : retiringFanSlots.current.get(fan.visual.node.id)??fan.slots
