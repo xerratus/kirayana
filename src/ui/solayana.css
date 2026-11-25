@@ -446,7 +446,7 @@ textarea {
 	resize: vertical;
 }
 
-button:not(.nav-item):not(.ui-icon-action):not(.custom-select-trigger):not(.custom-select-option):not(.entity-nav-toggle):not(.composer-send):not(.prompt-typeahead button):not(.canvas-action-row) {
+button:not(.nav-item):not(.ui-icon-action):not(.custom-select-trigger):not(.custom-select-option):not(.entity-nav-toggle):not(.composer-send):not(.prompt-typeahead button):not(.canvas-action-row):not(.hosted-auth button) {
 	width: fit-content;
 	padding: 10px 14px;
 	border: 1px solid var(--border);
@@ -457,7 +457,7 @@ button:not(.nav-item):not(.ui-icon-action):not(.custom-select-trigger):not(.cust
 	font-weight: 700;
 }
 
-button:not(.nav-item):not(.ui-icon-action):not(.custom-select-trigger):not(.custom-select-option):not(.entity-nav-toggle):not(.composer-send):not(.prompt-typeahead button):not(.canvas-action-row):hover:not(:disabled) {
+button:not(.nav-item):not(.ui-icon-action):not(.custom-select-trigger):not(.custom-select-option):not(.entity-nav-toggle):not(.composer-send):not(.prompt-typeahead button):not(.canvas-action-row):not(.hosted-auth button):hover:not(:disabled) {
 	background: var(--hover);
 }
 

@@ -12,7 +12,7 @@ page.on('response',async response=>{if(response.url().includes('/rpc/save_organi
 let stage='setup';const deadline=setTimeout(()=>{console.error(`Hosted test timed out at ${stage}`);process.exit(1)},90000)
 const step=name=>{stage=name;console.log(`Hosted: ${name}`)}
 const origin=process.env.APP_URL||'http://127.0.0.1:5180'
-async function signIn(user){await page.getByRole('button',{name:'Sign in',exact:true}).first().click();await page.getByLabel('Email',{exact:true}).fill(user.email);await page.getByLabel('Password',{exact:true}).fill(user.password);await page.locator('form').getByRole('button',{name:'Sign in',exact:true}).click()}
+async function signIn(user){await page.getByRole('tab',{name:'Sign in',exact:true}).click();await page.getByLabel('Email',{exact:true}).fill(user.email);await page.getByLabel('Password',{exact:true}).fill(user.password);await page.locator('form').getByRole('button',{name:'Sign in',exact:true}).click()}
 async function logout(){await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('button',{name:'Sign out',exact:true}).click();await page.getByRole('heading',{name:'Create your account',exact:true}).waitFor()}
 try{
  await page.goto(origin);await page.getByRole('heading',{name:'Create your account',exact:true}).waitFor()
