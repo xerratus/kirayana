@@ -103,7 +103,8 @@ export function migrateOrganizer(value: unknown): Organizer {
   return state
 }
 export function nodeColor(state: Organizer, node: Node): string {
-  return node.kind === 'item' ? state.nodes.find(n => n.id === node.parentId)?.color ?? node.color : node.color
+  const parent=state.nodes.find(n=>n.id===node.parentId)
+  return parent && (node.kind==='item' || (node.kind==='entity' && parent.kind==='subset')) ? nodeColor(state,parent) : node.color
 }
 export function addField(state: Organizer, collectionId: string, field: Omit<Field, 'id' | 'collectionId'>): Organizer {
   if (!state.nodes.some(n => n.id === collectionId && ['collection','subset'].includes(n.kind))) throw new Error('Collection not found.')

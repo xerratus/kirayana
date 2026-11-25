@@ -187,7 +187,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     const radius=turn ? slot.radius : animation[`fan-orb-radius:${slot.project.id}`]??slot.radius
     const distance = (50 + (96 + (radius - 96) * fan.spread - 50) * fan.reveal) * fan.factor
     const point = { x: fan.visual.point.x + Math.cos(angle) * distance, y: fan.visual.point.y + Math.sin(angle) * distance }
-    return { seam:stream && Math.abs(angle+Math.PI/2)<.4 ? 'right' : stream && Math.abs(angle-Math.PI*3/2)<.4 ? 'left' : null, seamX:fan.visual.point.x, node: slot.project, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (turning ? stream!.visible ? 1 : 0 : turn ? 1 : animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
+    return { seam:stream && Math.abs(angle+Math.PI/2)<.4 ? 'right' : stream && Math.abs(angle-Math.PI*3/2)<.4 ? 'left' : null, seamX:fan.visual.point.x, node: {...slot.project,color:nodeColor(state,slot.project)}, subsetId: fan.visual.node.id, point, radius: slot.orbRadius * scale * focus * depthAtScreen(point, viewport) * fan.spread, opacity: fan.reveal * fan.visual.progress * (turning ? stream!.visible ? 1 : 0 : turn ? 1 : animation[`fan-orb-visible:${slot.project.id}`]??0), slot }
   }).filter(orb=>orb.opacity>.001)})
   const visualsRef = useRef(visuals); visualsRef.current = visuals
   const latest = useRef({ state, view, root, camera, scale, focus, center, focused }); latest.current = { state, view, root, camera, scale, focus, center, focused }
