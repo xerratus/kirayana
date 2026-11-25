@@ -7,7 +7,7 @@ page.on('pageerror',e=>errors.push(e.message))
 const saved=()=>page.evaluate(()=>new Promise(resolve=>{const r=indexedDB.open('kirayana-organizer',1);r.onsuccess=()=>{const db=r.result,q=db.transaction('organizer').objectStore('organizer').get('current');q.onsuccess=()=>{db.close();resolve(q.result)}}}))
 const settle=()=>page.waitForTimeout(1300)
 try{
- await page.goto('http://127.0.0.1:5180/')
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:5180/')
  await page.getByRole('button',{name:'Search 451 Spaces Spaces',exact:true}).waitFor()
  await settle()
  let state=await saved(),group=state.nodes.find(n=>n.name==='451 Spaces')

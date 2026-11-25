@@ -8,7 +8,7 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[]
  page.on('pageerror',error=>errors.push(error.message))
  const saved=()=>page.evaluate(()=>new Promise(resolve=>{const request=indexedDB.open('kirayana-organizer',1);request.onsuccess=()=>{const db=request.result,read=db.transaction('organizer').objectStore('organizer').get('current');read.onsuccess=()=>{db.close();resolve(JSON.stringify(read.result))}}}))
- await page.goto('http://127.0.0.1:5180');await page.waitForTimeout(900)
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:5180');await page.waitForTimeout(900)
  await page.getByRole('button',{name:'Help',exact:true}).click();await page.waitForTimeout(400)
  const before=await saved(),orb=page.locator('[data-orb]').first(),position=await orb.boundingBox(),backgrounds=new Set()
  for(const [id,name]of [['original','Midnight'],['linen','Linen'],['garden','Garden'],['seaside','Seaside'],['lavender','Lavender'],['fireside','Fireside']]) {

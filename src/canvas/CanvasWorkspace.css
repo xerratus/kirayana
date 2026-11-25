@@ -621,7 +621,7 @@
   visibility: hidden;
   transition: transform 320ms ease, height 320ms ease, visibility 0s linear 320ms;
 }
-.canvas-workspace.left-flyout-open .canvas-left-floating-flyout { transform: translateX(0); visibility: visible; transition-delay: 0s; }
+.canvas-left-floating-flyout.is-open { transform: translateX(0); visibility: visible; transition-delay: 0s; }
 .canvas-left-floating-flyout .canvas-right-flyout-body { flex: none; overflow: visible; }
 
 @media(max-width:900px){.canvas-left-floating-flyout{width:min(90%,460px)}}

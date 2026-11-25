@@ -1,6 +1,6 @@
 # Kirayana implementation plan
 
-Status: Phase 1 committed (`3b628a8`). Phase 2 committed (`30870c4`). Phase 3 complete; validation recorded in `artifacts/PHASE_3.md`. Phase 4 audited on November 25, 2026; integration not started. See `artifacts/PHASE_4_AUDIT.md` for findings, current scope, and rollout gates.
+Status: Phase 1 committed (`3b628a8`). Phase 2 committed (`30870c4`). Phase 3 complete; validation recorded in `artifacts/PHASE_3.md`. Phase 4 integrated on November 25, 2026; migration and Auth redirects applied. See `artifacts/PHASE_4.md` for validation and deployment steps. See `artifacts/PHASE_4_AUDIT.md` for findings, current scope, and rollout gates.
 
 ## Goal and fixed requirements
 
@@ -184,7 +184,7 @@ Acceptance:
 
 ### Phase 4 — Supabase accounts and hosted persistence
 
-Connect the Kirayana-specific Supabase project once its URL/ref and production origin are supplied. No project is currently configured. Add Auth, owner-scoped PostgreSQL migrations/RLS, private file storage, and the hosted repository. Keep all approved canvas changes above. Add local-to-cloud import with an explicit preview, stable IDs, validation, and retry handling. Use the existing UI language for account/loading/errors.
+Connect the Kirayana-specific Supabase project once its URL/ref and production origin are supplied. Project `slxlhuiooewsgfumygmx` is configured for https://kirayana.com. Add Auth, owner-scoped PostgreSQL migrations/RLS, private file storage, and the hosted repository. Keep all approved canvas changes above. Add local-to-cloud import with an explicit preview, stable IDs, validation, and retry handling. Use the existing UI language for account/loading/errors.
 
 Recommended first hosted persistence shape: one owner-scoped, versioned JSONB organizer document per account, a profile row, private attachment metadata/objects, and import receipts. This matches the current atomic repository contract and preserves node-level Tasks and layout data. Keep Blob bytes outside JSONB. Keep owner identity and server version outside the user-supplied organizer payload. Server-side saves use a transactional compare-and-swap operation; separate the server version from the local snapshot revision. This is single-user persistence, not simultaneous collaborative editing.
 
@@ -195,7 +195,7 @@ Sequence:
 1. **Save/session foundation:** serialized/coalesced saves, revision-aware status, flush/retry/error handling, account-switch cancellation, and per-account cache boundaries. Keep the existing local organizer intact.
 2. **Auth and profiles:** sign up/in/out, email confirmation, password recovery, explicit production/local redirects, profile-derived full name, and a session-keyed workspace. Deploy URL allowlists are configured in Supabase, not inferred from localhost defaults.
 3. **Database and Storage:** owner-derived identity, RLS on every table and the private bucket, validated snapshot/attachment metadata, atomic version checks, and no browser service-role credentials. Add migrations before changing the app’s default repository.
-4. **Hosted repository:** load/save the complete current model, separate content/layout persistence, lazy attachment downloads compatible with full backup export, and conflict/retry feedback. A failed load must not create or overwrite an empty organizer.
+4. **Hosted repository:** load/save the complete current model, separate content/layout persistence, private attachment downloads compatible with full backup export (Phase 4 downloads files on open to retain complete browser recovery; lazy loading is deferred), and conflict/retry feedback. A failed load must not create or overwrite an empty organizer.
 5. **Explicit import:** preview all content including Tasks and files, preserve IDs/order/anchors, copy rather than delete browser data, use an idempotency receipt and staged uploads, and reject an existing cloud organizer unless a separate confirmed replacement flow exists.
 6. **Two-account and deployment checks:** verify isolated content/layout/skills/files, expired sessions, account switching with queued saves, concurrent-tab conflicts, interrupted imports, and email links on the actual hosted origin. No Docker is required; use the remote development project for database integration tests if no local Postgres instance exists.
 

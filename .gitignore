@@ -7,3 +7,5 @@ dist/
 .dev.vars
 
 *.tsbuildinfo
+
+supabase/.temp/

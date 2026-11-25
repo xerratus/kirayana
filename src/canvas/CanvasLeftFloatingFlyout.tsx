@@ -18,7 +18,7 @@ export function CanvasLeftFloatingFlyoutFrame({ open, color, label, children }: 
     measure()
     return () => { observer.disconnect(); window.removeEventListener('resize', measure) }
   }, [open])
-  return <aside ref={flyout} className="canvas-left-floating-flyout" style={{ '--flyout-orb-color': open ? color : lastColor.current, height: height === null ? undefined : `${height}px` } as CSSProperties} aria-label={label} aria-hidden={!open} inert={!open}>
+  return <aside ref={flyout} className={`canvas-left-floating-flyout${open ? ' is-open' : ''}`} style={{ '--flyout-orb-color': open ? color : lastColor.current, height: height === null ? undefined : `${height}px` } as CSSProperties} aria-label={label} aria-hidden={!open} inert={!open}>
     {open && children}
   </aside>
 }

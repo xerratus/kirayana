@@ -4,7 +4,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true})
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[]
  page.on('pageerror',error=>errors.push(error.message))
- await page.goto('http://127.0.0.1:5180');await page.waitForTimeout(800)
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:5180');await page.waitForTimeout(800)
  await page.getByRole('button',{name:'Add Tasks to You',exact:true}).focus();await page.keyboard.press('Enter')
  const dialog=page.getByRole('dialog')
  await dialog.getByRole('textbox',{name:'Name',exact:true}).fill('Tasks')

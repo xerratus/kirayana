@@ -1,3 +1,4 @@
+import { HostedApp } from '../hosted/HostedApp'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { seedServersFan, seedLargeGroup } from '../organizer/developmentFixtures'
 import { brand } from './brand'
@@ -6,7 +7,7 @@ import { initialOrganizer, type Organizer } from '../organizer/model'
 import { createLocalRepository } from '../storage/indexedDb'
 import type { OrganizerRepository } from '../storage/repository'
 
-export function App() {
+function LocalApp() {
   const [state, setState] = useState<Organizer | null>(null)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('Loading browser storage…')
@@ -44,3 +45,5 @@ export function App() {
   }, [status])
   return state ? <CanvasWorkspace state={state} change={change} storageStatus={status} storageError={error} /> : <main className="kirayana-loading" role={error ? 'alert' : 'status'}><h1>{brand.name}</h1><p>{error || status}</p>{error && <button type="button" onClick={() => location.reload()}>Retry</button>}</main>
 }
+
+export function App() { return import.meta.env.DEV && import.meta.env.VITE_LOCAL_CANVAS === 'true' ? <LocalApp /> : <HostedApp /> }
