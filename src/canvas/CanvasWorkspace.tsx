@@ -9,6 +9,8 @@ import { discoverActions, previewAction, applyPlan, skillInScope, type ActionPla
 import { encodeBackup, decodeBackup } from '../storage/backup'
 import { arcSpan, pushArcAngles } from './arcSpacing'
 import { parentCanvas } from '../organizer/navigation'
+import { ThemeSwitcher } from '../app/ThemeSwitcher'
+import { applyTheme, readTheme, saveTheme, orbLabelColor } from '../app/themes'
 import { brand } from '../app/brand'
 import { addField, saveEntityValues, subsetItemLabel, deleteNode, deleteRecord, descendantIds, addNode, emptyView, moveNode, nodeColor, palette, updateNode, type FieldValue, type Node, type Organizer } from '../organizer/model'
 import { useConfirmation } from '../ui/confirmationContext'
@@ -34,6 +36,8 @@ type Editor = { kind: 'create' | 'edit'; nodeKind?: 'entity' | 'collection' | 's
 const orbScale = (width: number, height: number) => Math.min(1, Math.max(.48, Math.min(width / 900, height / 900)))
 
 export function CanvasWorkspace({ state, change, storageStatus, storageError }: { state: Organizer; change: Change; storageStatus: string; storageError: string }) {
+  const [theme,setTheme]=useState(readTheme)
+  useLayoutEffect(()=>{applyTheme(theme);saveTheme(theme)},[theme])
   const confirm = useConfirmation(), flyoutDirty = useRef(false)
   const onFlyoutDirty = useCallback((dirty: boolean) => { flyoutDirty.current = dirty }, [])
   function leaveFlyout(action: () => void) {
@@ -384,7 +388,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
     const { width, height } = viewport, ratio = Math.min(window.devicePixelRatio || 1, 2)
     element.width = Math.round(width * ratio); element.height = Math.round(height * ratio)
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-    drawBackground(ctx, width, height, true)
+    drawBackground(ctx, width, height, theme.mode==='dark',theme.canvas)
     const background = getComputedStyle(element).getPropertyValue('--panel').trim()
     for (const v of visuals.slice(1)) {
       if (v.node.kind === 'item') continue
@@ -415,7 +419,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       for (const point of [start, end]) { ctx.beginPath(); ctx.arc(point.x, point.y, 1.8, 0, Math.PI * 2); ctx.fillStyle = `${v.node.color}bb`; ctx.fill() }
     }
     ctx.globalAlpha = 1
-    for (const fan of fans) drawFan(ctx, fan.visual.point, fan.slots, fan.reveal, fan.spread, fan.factor, fan.visual.node.color, fan.visual.node.name, fan.visual.progress, animation[`hover:fan:${fan.visual.node.id}`] ?? 0, viewport)
+    for (const fan of fans) drawFan(ctx, fan.visual.point, fan.slots, fan.reveal, fan.spread, fan.factor, fan.visual.node.color, fan.visual.node.name, fan.visual.progress, animation[`hover:fan:${fan.visual.node.id}`] ?? 0, viewport,theme.canvas.fan)
     ctx.globalAlpha = 1
     for (const v of visuals) {
       if (v.radius <= 1) continue
@@ -423,10 +427,10 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       if (v.node.kind === 'item') continue
       const main = v.node.id === root.id, depth = v.depth
       ctx.globalAlpha = main ? 1 : v.progress
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#edf5ff'; ctx.font = `${main ? 700 : 650} ${Math.max(9, (main ? 17 : 15) * camera.zoom * depth)}px sans-serif`
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = theme.id==='original' ? '#edf5ff' : theme.palette.text; ctx.font = `${main ? 700 : 650} ${Math.max(9, (main ? 17 : 15) * camera.zoom * depth)}px sans-serif`
       const label=v.node.kind==='user' ? 'You' : v.node.name
       ctx.fillText(label, v.point.x, v.point.y + (groupLabels.get(v.node.id)?.title ?? v.radius + 28 * camera.zoom * depth))
-      ctx.fillStyle = '#9bb0cb'; ctx.font = `${Math.max(8, (main ? 10.5 : 12) * camera.zoom * depth)}px sans-serif`
+      ctx.fillStyle = theme.id==='original' ? '#9bb0cb' : theme.palette.muted; ctx.font = `${Math.max(8, (main ? 10.5 : 12) * camera.zoom * depth)}px sans-serif`
       ctx.fillText(v.node.kind==='user' ? (v.node.name==='You' ? 'John McGuinness' : v.node.name) : main ? 'Space' : v.node.kind === 'skills' ? 'Personalize your experience' : kindLabel(v.node), v.point.x, v.point.y + (groupLabels.get(v.node.id)?.subtitle ?? v.radius + (main ? 50 : 49) * camera.zoom * depth))
       ctx.globalAlpha = 1
     }
@@ -439,7 +443,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       }
       ctx.globalAlpha = orb.opacity; ctx.translate(orb.point.x, orb.point.y); ctx.scale(spread, spread)
       drawOrb(ctx, 'projects', 0, 0, orb.radius / spread, orb.node.color, background, hovered === orb.node.id || highlightSpace === orb.node.id ? 1 : 0)
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = orb.node.color
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = orbLabelColor(orb.node.color,theme)
       ctx.font = `700 ${Math.max(8, 13 * (orb.slot.orbRadius / 23) * scale * depthAtScreen(orb.point, viewport))}px sans-serif`
       const words = orb.node.name.trim().split(/\s+/), last=words.at(-1)!, initials = (/^\d{1,3}$/.test(last) ? last : words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0,2)).toUpperCase()
       ctx.fillText(initials, 0, 0); ctx.restore()
@@ -592,7 +596,7 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
         </div>}
       </div>})}
       {fanOrbs.filter(orb=>orb.node.id===hovered && orb.opacity>.8).map(orb=><span key={`hint:${orb.node.id}`} className="kirayana-group-tooltip" style={{left:orb.point.x,top:orb.point.y-orb.radius-12}}>{orb.node.name}</span>)}
-      <header className="canvas-header"><a href="/" className="canvas-brand" onClick={event => { event.preventDefault(); enter(state.nodes.find(n => n.id === state.rootId)!) }}><Layers3 size={23} /><span>{brand.name}</span></a><div className="account-menu"><UiIconButton label="Your account" onClick={() => setAccount(value => !value)} aria-expanded={account}><UserRound size={19} /></UiIconButton>{account && <div className="account-menu-popover"><div className="account-menu-identity"><span><strong>{state.nodes.find(n => n.id === state.rootId)!.name}</strong><small>{storageStatus}</small></span></div><button onClick={() => { edit(state.nodes.find(n => n.id === state.rootId)!); setAccount(false) }}><Pencil size={15} />Edit profile</button><button onClick={exportBackup}><Download size={15} />Export backup</button><button onClick={() => { setDirectory(true); setFocused(true); setAccount(false) }}><List size={15} />Browse actions</button><button onClick={() => importInput.current?.click()}><Download size={15} />Import backup</button><p className="kirayana-storage-note">Local browser storage. Full backups include attached files.</p></div>}</div><UiIconButton label="Help" onClick={() => {setHelp(open=>!open);setAccount(false)}}><CircleHelp size={19} /></UiIconButton></header>
+      <header className="canvas-header"><a href="/" className="canvas-brand" onClick={event => { event.preventDefault(); enter(state.nodes.find(n => n.id === state.rootId)!) }}><Layers3 size={23} /><span>{brand.name}</span></a><ThemeSwitcher theme={theme} onChange={setTheme}/><div className="account-menu"><UiIconButton label="Your account" onClick={() => setAccount(value => !value)} aria-expanded={account}><UserRound size={19} /></UiIconButton>{account && <div className="account-menu-popover"><div className="account-menu-identity"><span><strong>{state.nodes.find(n => n.id === state.rootId)!.name}</strong><small>{storageStatus}</small></span></div><button onClick={() => { edit(state.nodes.find(n => n.id === state.rootId)!); setAccount(false) }}><Pencil size={15} />Edit profile</button><button onClick={exportBackup}><Download size={15} />Export backup</button><button onClick={() => { setDirectory(true); setFocused(true); setAccount(false) }}><List size={15} />Browse actions</button><button onClick={() => importInput.current?.click()}><Download size={15} />Import backup</button><p className="kirayana-storage-note">Local browser storage. Full backups include attached files.</p></div>}</div><UiIconButton label="Help" onClick={() => {setHelp(open=>!open);setAccount(false)}}><CircleHelp size={19} /></UiIconButton></header>
       {root.id !== state.rootId && <button className="canvas-canvas-back" onClick={() => enter(parentCanvas(state, root.id))}><ArrowLeft size={17} /><span>Back</span><span className="canvas-canvas-back-project">/ {root.name}</span></button>}
       {storageError && <div className="canvas-status canvas-error" role="alert">{storageError} <UiButton onClick={exportBackup}>Export backup</UiButton></div>}
       <nav className="canvas-orb-nav" aria-label="Explore canvas">{visible.map(node => <span key={node.id}><button onClick={() => { if (node.collapsed && node.id !== root.id) toggle(node.id); else openPanel(node.id) }}>{node.name} details</button><button onClick={() => toggle(node.id)}>{node.collapsed ? 'Expand' : 'Collapse'} {node.name}</button><button onClick={() => edit(node)}>Edit {node.name}</button>{['user','entity','subset'].includes(node.kind) && <button onClick={() => create(node)}>Add {subsetItemLabel(node)} to {node.name}</button>}{['user','entity'].includes(node.kind) && <><button onClick={() => create(node,'tasks')}>Add Tasks to {node.name}</button><button onClick={() => create(node,'collection')}>Add Collection to {node.name}</button><button onClick={() => create(node,'subset')}>Add Group to {node.name}</button><button onClick={() => create(node,'item')}>Add Item to {node.name}</button></>}{node.kind === 'subset' && <button onClick={() => change(s => ({ ...s, nodes: s.nodes.map(n => n.id === node.id ? { ...n, fanCollapsed: !n.fanCollapsed } : n) }))}>{node.fanCollapsed ? 'Expand' : 'Collapse'} {node.name} fan</button>}</span>)}{fanOrbs.map(v => <span key={`fan:${v.node.id}`}><button onClick={() => choose(v.node)}>Open {v.node.name} space</button><button onClick={() => enter(v.node)}>Open {v.node.name} canvas</button></span>)}</nav>

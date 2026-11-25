@@ -54,7 +54,7 @@ export function fanGeometry(slots: FanSlot[], reveal: number, spread: number, fa
   const outer = (50 + (outerRadius - 50) * reveal) * factor
   return { inner, outer, start: projectFanStart, end: Math.min(projectFanStart + projectFanMaxSpan, Math.max(projectFanStart, ...slots.map(slot => slot.end)) + projectFanEdgePadding) }
 }
-export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: FanSlot[], reveal: number, spread: number, factor: number, color: string, label: string, opacity: number, hover = 0, viewport = { width: 0, height: 0 }) {
+export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: FanSlot[], reveal: number, spread: number, factor: number, color: string, label: string, opacity: number, hover = 0, viewport = { width: 0, height: 0 }, background = '#080b12') {
   if (!slots.length || reveal <= 0 || opacity <= 0) return
   const { inner, outer, start, end } = fanGeometry(slots, reveal, spread, factor)
   const fanPath = new Path2D()
@@ -70,7 +70,7 @@ export function drawFan(ctx: CanvasRenderingContext2D, center: Point, slots: Fan
     ctx.save(); ctx.clip(outside, 'evenodd'); ctx.filter = 'blur(12px)'; ctx.globalAlpha = reveal * hover * .2 * opacity; ctx.strokeStyle = color; ctx.lineWidth = 10; ctx.stroke(fanPath); ctx.restore()
   }
   ctx.save()
-  ctx.fillStyle = '#080b12'; ctx.globalAlpha = reveal * .25 * opacity; ctx.fill(fanPath)
+  ctx.fillStyle = background; ctx.globalAlpha = reveal * .25 * opacity; ctx.fill(fanPath)
   ctx.globalAlpha = reveal * opacity
   ctx.beginPath(); ctx.arc(center.x, center.y, outer - 7.5 * factor, start, end)
   ctx.strokeStyle = color; ctx.lineWidth = Math.min(15 * factor, outer - inner); ctx.stroke()

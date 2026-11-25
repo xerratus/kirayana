@@ -11,6 +11,12 @@ npm run dev
 
 Open http://localhost:5180. No Docker, Supabase, or AI credentials required. Dark mode is the default.
 
+## Themes
+
+Use the palette icon in the floating toolbar to choose Midnight, Linen, Garden, Seaside, Lavender, or Fireside. Themes change colors only; canvas positions, content, node colors, controls, and interactions remain intact. The preference is stored in this browser, separately from organizer data and backups. Use arrow keys in the theme menu and Escape to close it.
+
+Theme checks: `node scripts/browser-themes.mjs` with the dev server running. Set `PLAYWRIGHT_MODULE` to an installed Playwright module when needed; optionally set `THEME_SCREENSHOT_DIR` to save previews.
+
 ## Local canvas
 
 - Local user hub and collapsed Skills orb.

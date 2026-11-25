@@ -1,0 +1,20 @@
+.kirayana-theme-switcher{display:flex;align-items:center}
+.kirayana-theme-menu{position:absolute;z-index:40;top:calc(100% + 10px);left:0;width:300px;max-width:calc(100vw - 40px);max-height:calc(100dvh - 110px);overflow:auto;padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--panel);box-shadow:var(--shadow)}
+.kirayana-theme-heading{padding:8px 10px 12px;color:var(--text);font-size:13px;font-weight:700}
+.kirayana-theme-heading>span{display:block;margin-top:4px;color:var(--muted);font-size:11px;font-weight:400}
+.kirayana-theme-menu .kirayana-theme-option{display:flex;justify-content:flex-start;align-items:center;gap:10px;width:100%;height:auto;min-height:58px;padding:9px 10px;border:0;border-radius:9px;background:transparent;text-align:left;color:var(--text);white-space:normal}
+.kirayana-theme-menu .kirayana-theme-option:hover,.kirayana-theme-menu .kirayana-theme-option[aria-checked=true]{background:var(--hover)}
+.kirayana-theme-swatch{position:relative;display:block;flex:0 0 40px;width:40px;height:36px;border:1px solid;border-radius:8px}
+.kirayana-theme-swatch i:first-child{position:absolute;width:19px;height:19px;top:7px;left:5px;border:1px solid;border-radius:50%}
+.kirayana-theme-swatch i:last-child{position:absolute;width:8px;height:8px;top:8px;right:4px;border-radius:50%}
+.kirayana-theme-description{display:grid;gap:3px;flex:1;min-width:0}
+.kirayana-theme-description strong{font-size:13px;font-weight:600}
+.kirayana-theme-description small{color:var(--muted);font-size:11px;font-weight:400;line-height:1.35}
+.kirayana-theme-option>svg{flex-shrink:0;color:var(--accent)}
+.kirayana-loading{background:var(--bg);color:var(--text)}
+:root[data-theme=light] .canvas-inspector,:root[data-theme=light] .canvas-inspector-sub{box-shadow:0 5px 24px #27344312}
+:root[data-theme=light] .canvas-orb-menu,:root[data-theme=light] .canvas-floating-flyout,:root[data-theme=light] .canvas-left-floating-flyout,:root[data-theme=light] .canvas-prompt,:root[data-theme=light] .canvas-response{box-shadow:0 10px 30px #27344318}
+
+.canvas-plan-feedback li a,.canvas-search-person a,.canvas-search-results a,.kirayana-action-link:hover{color:var(--accent)}
+.canvas-plan-feedback li a:hover,.canvas-search-person a:hover,.canvas-search-results a:hover{color:var(--accent-strong)}
+.canvas-header:has(.kirayana-theme-menu){z-index:41}
