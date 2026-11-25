@@ -1,6 +1,6 @@
 # Kirayana implementation plan
 
-Status: Phase 1 committed (`3b628a8`). Phase 2 committed (`30870c4`). Phase 3 complete; validation recorded in `artifacts/PHASE_3.md`. Phase 4 not started.
+Status: Phase 1 committed (`3b628a8`). Phase 2 committed (`30870c4`). Phase 3 complete; validation recorded in `artifacts/PHASE_3.md`. Phase 4 audited on November 25, 2026; integration not started. See `artifacts/PHASE_4_AUDIT.md` for findings, current scope, and rollout gates.
 
 ## Goal and fixed requirements
 
@@ -14,11 +14,11 @@ Only requested product differences:
 
 - Main hub represents the current user, not an organization.
 - User-created spaces, Collections, Groups, and Items replace Solayana administration concepts.
-- Floating toolbar is top right and contains only logo/name, user, and help controls.
+- Floating toolbar is top left and contains logo/name, user, and help controls. Help uses a separate left flyout; right-side detail/search flyouts remain.
 - Main prompt retains attachment and submit controls; no provider/model selector.
 - No left chat flyout and no canvas shift for chat.
 - Skills belong to the user hub and customize the user's organizer experience.
-- Users can change space, collection, and group colors. Items inherit their parent space color.
+- Users can change standalone space, collection, and group colors. Spaces inside Groups inherit the Group color; Items inherit their parent’s resolved color.
 
 Decisions confirmed by the user:
 
@@ -30,7 +30,7 @@ Decisions confirmed by the user:
 | Solayana source (`apps/web/src/`) | Kirayana use |
 | --- | --- |
 | `CanvasWorkspace.tsx` | Preserve drawing, hit testing, gestures, animation, fan geometry, connectors, context menus, and render scheduling; replace fixed organization/project IDs and PHP calls with generic nodes and services. |
-| `CanvasWorkspace.css` plus required global styles/tokens | Preserve background, grid, typography, orb treatment, panel styling, focus blur, spacing, easing, and control styles. Carry only needed global rules to prevent style overrides. |
+| `CanvasWorkspace.css` plus required global styles/tokens | Preserve background, grid, typography, orb treatment, panel styling, spacing, easing, and control styles, except subsequent approved Kirayana changes listed below. Carry only needed global rules to prevent style overrides. |
 | `canvasCamera.ts`, `canvasDepth.ts`, `canvasInspector.ts` | Reuse camera transforms, depth behavior, opening placement, and collision avoidance. |
 | `CanvasDetailWindow.tsx`, `CanvasDetailList.tsx`, `canvasDetailListFilter.ts` | Reuse movable list/detail windows and search/filter behavior. Supply generic schemas and records. |
 | `CanvasRightFlyout.tsx` | Reuse the floating frame and height/color transitions. Replace domain-specific content with organizer forms. |
@@ -50,17 +50,28 @@ Must preserve:
 - Mouse drag, trackpad pan, wheel/pinch zoom, zoom around the pointer, recenter, and camera controls.
 - Orb drag and modifier-assisted movement of connected children; pointer capture and click-versus-drag thresholds.
 - Single click, double click, context-menu targets, keyboard equivalents, dismissal, and focus management.
-- Expand/collapse animation, including shrinking fan children rather than fading them.
-- Fan arc angular span during collapse, fan padding, ring arrangement, and fan child placement.
+- Expand/collapse animation. Group browsing uses the approved one-row stream through the 12 o’clock divider, with separate cone fades.
+- Fan arc angular span during collapse, fan padding, one-row arrangement, and fan child placement. Pagination appears only above 14 matching Spaces.
 - Draggable rounded anchor arc, both connector attachment points while dragging, curved funnel sides, and connector endpoint arcs.
 - Separate nested canvas views and return navigation, with independent camera/layout state.
 - Outward list/detail placement based on the originating branch, organic side selection near 12/6 o'clock, and collision avoidance on initial opening.
 - Open world-space positions remain fixed during panning; do not rerun placement when the camera moves.
 - Right detail flyout overlays the canvas, attaches to the right edge, keeps fixed top spacing, animates content height, scrolls at its maximum height, and retains the originating color while closing.
 - Closing a detail also closes a matching flyout only when the target matches.
-- Prompt focus dimensions, circular submit control, canvas/toolbar blur layers, reply labels, spacing, and response scrolling.
+- Prompt focus dimensions, circular submit control, reply labels, spacing, and response scrolling. Prompt focus no longer blurs, shrinks, dims, or blocks the canvas.
 
-Create a state-by-state parity checklist and reference screenshots before adapting domain behavior. Compare geometry and interaction transitions as well as static appearance. Explicit toolbar/content differences above are the only intentional differences.
+Create a state-by-state parity checklist and reference screenshots before adapting domain behavior. Compare geometry and interaction transitions as well as static appearance. The following user-approved changes extend the original baseline and must survive Phase 4:
+
+- Tasks branches: Enter to add; completion, restore, confirmed deletion, Show completed toggle; task content survives backups. One-second struck-through feedback followed by a 300 ms row collapse is temporary UI state.
+- Group schemas and Collection schemas are defined at creation; Name is the default. Group Spaces have inherited color and optional saved fan anchors/initial placement markers.
+- One-row, 14-Space Group fan, 360° arc and 12 o’clock divider, streaming pagination (1 second) and prefix filtering (500 ms); no rim drag or position slider. Independent 500 ms cone fades leave off-page expanded Spaces orphaned until their fan orb returns.
+- Virtualized Group directory, stable expanded world positions, fixed saved cone anchors, and first-expansion placement along the fan direction.
+- Labels below the visible fan edge; pagination below labels and behind the prompt.
+- Inline panel headers show at most Search, Add, chevron, Close; Edit and Delete are in context menus. Context-menu sizing uses the viewport.
+- Separate left Help flyout; profile/account management can reuse it. No left chat.
+- User hub title is You; the subtitle must resolve from the signed-in profile rather than the current demo fallback.
+
+Exact source-file equality is no longer the acceptance gate for intentionally changed files. Preserve the geometry/interaction contract and record approved differences in regression checks.
 
 ## Domain model
 
@@ -72,6 +83,7 @@ Create a state-by-state parity checklist and reference screenshots before adapti
 | Collection field | Stable ID, label, type, order, required/default settings. Begin with text, long text, number, date, checkbox, and single-select. |
 | Collection record | Stable ID, collection ID, typed values keyed by field ID, timestamps, and revision. |
 | Group | Branch on a space with the existing stroke arc/fan; contains ordered child spaces. |
+| Tasks | Task-list branch with ordered task IDs, titles, completion flags, and timestamps; saved with its owner’s organizer. |
 | Item | Single structured detail/note attached to a space; inherits its space's color. |
 | Skill | User-owned instruction text, command, description, enabled flag, version, and optional space scope. |
 | Attachment | Private file metadata and local Blob initially; private Supabase Storage object later. |
@@ -131,7 +143,7 @@ Port Solayana's action/skill concepts and presentation; adapt their semantics to
 
 ### Phase 1 — Exact canvas foundation with local persistence
 
-Build a runnable React/TypeScript/Vite app. Port the actual canvas renderer and supporting UI; isolate organization-specific reads/writes behind the local repository. Start with a local user hub and attached Skills branch, collapsed. Use the existing context-menu treatment to add a space. Keep the requested top-right toolbar, prompt shell, attachments control, submit control, camera controls, and floating detail frame. No left chat flyout or model selector.
+Build a runnable React/TypeScript/Vite app. Port the actual canvas renderer and supporting UI; isolate organization-specific reads/writes behind the local repository. Start with a local user hub and attached Skills branch, collapsed. Use the existing context-menu treatment to add a space. Keep the floating toolbar (subsequently moved top left by request), prompt shell, attachments control, submit control, camera controls, and floating detail frame. No left chat flyout or model selector.
 
 Port existing geometry and interaction helpers, rather than recreating lookalike components. Persist root/space positions, camera, collapse state, colors, and view navigation in IndexedDB. Use temporary reference fixtures for visual comparison; do not permanently seed example spaces into a user's organizer.
 
@@ -172,7 +184,22 @@ Acceptance:
 
 ### Phase 4 — Supabase accounts and hosted persistence
 
-Connect the supplied Supabase project. Add Auth, owner-scoped PostgreSQL migrations/RLS, private file storage, and the hosted repository. Add local-to-cloud import with an explicit preview, stable IDs, validation, and retry handling. Use the existing UI language for account/loading/errors.
+Connect the Kirayana-specific Supabase project once its URL/ref and production origin are supplied. No project is currently configured. Add Auth, owner-scoped PostgreSQL migrations/RLS, private file storage, and the hosted repository. Keep all approved canvas changes above. Add local-to-cloud import with an explicit preview, stable IDs, validation, and retry handling. Use the existing UI language for account/loading/errors.
+
+Recommended first hosted persistence shape: one owner-scoped, versioned JSONB organizer document per account, a profile row, private attachment metadata/objects, and import receipts. This matches the current atomic repository contract and preserves node-level Tasks and layout data. Keep Blob bytes outside JSONB. Keep owner identity and server version outside the user-supplied organizer payload. Server-side saves use a transactional compare-and-swap operation; separate the server version from the local snapshot revision. This is single-user persistence, not simultaneous collaborative editing.
+
+Tradeoff: whole-content snapshots are simple and preserve existing behavior, but rewrite more data as organizers grow. Persist camera/layout separately from content, coalesce saves, upload only changed attachments, and measure the 451-Space case. Normalize content tables later when granular queries or collaborative writes justify that change; do not silently adopt last-write-wins in the meantime.
+
+Sequence:
+
+1. **Save/session foundation:** serialized/coalesced saves, revision-aware status, flush/retry/error handling, account-switch cancellation, and per-account cache boundaries. Keep the existing local organizer intact.
+2. **Auth and profiles:** sign up/in/out, email confirmation, password recovery, explicit production/local redirects, profile-derived full name, and a session-keyed workspace. Deploy URL allowlists are configured in Supabase, not inferred from localhost defaults.
+3. **Database and Storage:** owner-derived identity, RLS on every table and the private bucket, validated snapshot/attachment metadata, atomic version checks, and no browser service-role credentials. Add migrations before changing the app’s default repository.
+4. **Hosted repository:** load/save the complete current model, separate content/layout persistence, lazy attachment downloads compatible with full backup export, and conflict/retry feedback. A failed load must not create or overwrite an empty organizer.
+5. **Explicit import:** preview all content including Tasks and files, preserve IDs/order/anchors, copy rather than delete browser data, use an idempotency receipt and staged uploads, and reject an existing cloud organizer unless a separate confirmed replacement flow exists.
+6. **Two-account and deployment checks:** verify isolated content/layout/skills/files, expired sessions, account switching with queued saves, concurrent-tab conflicts, interrupted imports, and email links on the actual hosted origin. No Docker is required; use the remote development project for database integration tests if no local Postgres instance exists.
+
+Full-name demo fallback, development fixture seeding, old local-only status strings, obsolete smoke scripts, and the source-equality parity script must be addressed as part of these steps. Prompt drafts/plans/replies remain transient in Phase 4 and must reset on account changes. Shared OpenAI remains Phase 5.
 
 Acceptance:
 
@@ -195,7 +222,7 @@ Acceptance:
 
 ### Phase 6 — Hosted release and parity sign-off
 
-Deploy the Vite frontend to static hosting and Supabase migrations/functions separately. A hosting provider is not selected yet; no Docker or long-running PHP server is needed. Keep deployment secrets separate from public Supabase configuration.
+Deploy the Vite frontend to static hosting and Supabase migrations/functions separately. Cloudflare is the current frontend deployment target; no Docker or long-running PHP server is needed. Keep deployment secrets separate from public Supabase configuration.
 
 Run the full parity matrix across desktop mouse, trackpad, supported touch/mobile layouts, keyboard, nested views, and large records. Check bundle/global CSS isolation, loading/error states, ownership, export/import, and account deletion handling. Keep the repository private.
 
