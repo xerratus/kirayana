@@ -35,7 +35,7 @@ export function AuthScreen({recovery=false,onRecovered}:{recovery?:boolean;onRec
   }
   return <main className="hosted-auth"><section className="hosted-card">
     <div className="hosted-brand"><Lens size={32} strokeWidth={1.8}/><h1>{brand.name}</h1></div>
-    <p>Your spaces, together.</p>
+    <p>Organize your life</p>
     {!recovery&&<div className="hosted-auth-tabs" role="tablist" aria-label="Account access" onKeyDown={event=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return
       event.preventDefault()
