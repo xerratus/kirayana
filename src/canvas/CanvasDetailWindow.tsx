@@ -27,7 +27,7 @@ function useAnimatedDepth(target: number) {
   return value.current
 }
 
-export function CanvasDetailWindow({ title, subtitle, color, active, restored = false, position, cone, scale, baseScale, viewport, canvasViewKey, children, subDetail, source, subSide, subPosition, getObstacles, placementKey, panelKind = 'list', onAdd, onEdit, onDuplicate, duplicateLabel, onOpen, onEditItem, onDelete, onDeleteItem, onClose, onActivate, onMove, onMoveSub, onMeasure }: {
+export function CanvasDetailWindow({ title, subtitle, color, active, restored = false, position, cone, scale, baseScale, viewport, canvasViewKey, children, subDetail, source, subSide, subPosition, getObstacles, placementKey, panelKind = 'list', onAdd, onEdit, addLabel, editLabel, onDuplicate, duplicateLabel, onOpen, onEditItem, onDelete, onDeleteItem, onClose, onActivate, onMove, onMoveSub, onMeasure }: {
   title: string
   subtitle: string
   color: string
@@ -50,6 +50,8 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
   onClose: () => void
   duplicateLabel?: string
   onDuplicate?: () => void
+  addLabel?: string
+  editLabel?: string
   onAdd?: () => void
   onEdit?: () => void
   onOpen?: () => void
@@ -205,7 +207,7 @@ export function CanvasDetailWindow({ title, subtitle, color, active, restored = 
     {connector && <svg className={`canvas-inspector-cone canvas-inspector-sub-line${restored ? ' is-restored' : ''}`} aria-hidden="true" style={{ color }}><g transform={`translate(${position.x} ${position.y}) scale(${scale})`}><path d={connector.path} /></g></svg>}
     <aside ref={windowRef} data-placement-key={placementKey} className={`canvas-inspector${active ? ' is-active' : ''}${restored ? ' is-restored' : ''}`} style={{ left: position.x, top: position.y, transform: `scale(${scale})`, '--orb-color': color } as CSSProperties} aria-label={`${title} details`} onContextMenu={contextMenu} onPointerDownCapture={event => { if (!(event.target as HTMLElement).closest('.canvas-flyout-open')) onActivate() }} onDoubleClick={event => { if (onOpen && !(event.target as HTMLElement).closest('.canvas-inspector-sub, button, a, input, textarea, select')) onOpen() }}>
       <div className="canvas-inspector-head" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp}>
-        <div><h2>{title}</h2><p>{subtitle}</p></div><div className="canvas-inspector-sub-actions">{onEdit && <UiIconButton label={`Edit ${title} fields`} onClick={onEdit}><Pencil size={18} /></UiIconButton>}{onAdd && <UiIconButton label={`Add record to ${title}`} onClick={onAdd}><Plus size={18} /></UiIconButton>}{onOpen && !onAdd && <UiIconButton label={`Open ${title} in side panel`} variant="secondary" className="canvas-flyout-open" onClick={onOpen}><ChevronRight size={18} /></UiIconButton>}{onDelete && <UiIconButton label={`Delete ${title}`} variant="danger" onClick={onDelete}><Trash2 size={18} /></UiIconButton>}<UiIconButton label={`Close ${title} details`} variant="secondary" onClick={onClose}><X size={18} /></UiIconButton></div>
+        <div><h2>{title}</h2><p>{subtitle}</p></div><div className="canvas-inspector-sub-actions">{onEdit && <UiIconButton label={editLabel??`Edit ${title} fields`} onClick={onEdit}><Pencil size={18} /></UiIconButton>}{onAdd && <UiIconButton label={addLabel??`Add record to ${title}`} onClick={onAdd}><Plus size={18} /></UiIconButton>}{onOpen && (!onAdd || panelKind==='detail') && <UiIconButton label={`Open ${title} in side panel`} variant="secondary" className="canvas-flyout-open" onClick={onOpen}><ChevronRight size={18} /></UiIconButton>}{onDelete && <UiIconButton label={`Delete ${title}`} variant="danger" onClick={onDelete}><Trash2 size={18} /></UiIconButton>}<UiIconButton label={`Close ${title} details`} variant="secondary" onClick={onClose}><X size={18} /></UiIconButton></div>
       </div>
       <div className="canvas-inspector-list">{children}</div>
       {menu && !menu.inSub && <div className="canvas-orb-menu canvas-inspector-context-menu" role="menu" style={{ left: menu.x, top: menu.y }}>
