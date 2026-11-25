@@ -625,3 +625,6 @@
 .canvas-left-floating-flyout .canvas-right-flyout-body { flex: none; overflow: visible; }
 
 @media(max-width:900px){.canvas-left-floating-flyout{width:min(90%,460px)}}
+
+.canvas-inspector-head>div:first-child,.canvas-inspector-sub-head>div:first-child{flex:1;min-width:0}
+.canvas-inspector-head h2,.canvas-inspector-sub-head h3{overflow-wrap:break-word}
