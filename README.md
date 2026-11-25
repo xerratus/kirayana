@@ -103,7 +103,7 @@ Use the supplied project URL and publishable key. `.env.local` is ignored by Git
 
 Sign up with a full name, confirm email, then sign in. Reset/resend flows use the current origin; Supabase is configured for `https://kirayana.com/` and local port 5180. The production Site URL is `https://kirayana.com`. External email delivery still depends on the project's Supabase email/SMTP settings. No custom email service is added.
 
-A new account offers **Start a blank canvas** or **Import browser data**. Import copies the original IndexedDB organizer, including all IDs, nested content, Tasks, schemas, records, skills, colors, layout, and files. It does not delete the browser source or merge into an existing account. Developer test fixtures are never seeded into hosted accounts. Backup import into an existing account keeps the original preview/confirmation flow.
+A new account automatically opens a fresh canvas with the user at its center. Existing accounts reopen their saved canvas. Browser data is never imported automatically or removed. To bring over an existing organizer, export its backup and use **Your account → Import backup**; the existing preview/replacement flow preserves content, IDs, layout, skills, Tasks, and files. Developer test fixtures are never seeded into hosted accounts.
 
 One organizer belongs to each account. `profiles` holds its full name; Auth owns email/password/session state. The **You** subtitle comes from the profile. Profile editing uses the left flyout. Sign-out flushes pending saves; if saving fails, retry or export before leaving.
 

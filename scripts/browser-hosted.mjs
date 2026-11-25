@@ -28,21 +28,27 @@ try{
   state.attachments=[{id:crypto.randomUUID(),name:'notes.txt',size:5,blob:new Blob(['hello'],{type:'text/plain'})}]
   const repo=createLocalRepository();await repo.save(state);repo.close();return {...state,attachments:state.attachments.map(({blob,...file})=>file)}
  })
- step('import');await signIn(users[0]);await page.getByRole('button',{name:/Import browser data/}).waitFor();await page.getByRole('button',{name:/Import browser data/}).click();await Promise.race([page.locator('.canvas-workspace').waitFor(),page.getByRole('alert').waitFor().then(async()=>{throw new Error(await page.getByRole('alert').innerText())})])
+ step('new canvas');await signIn(users[0]);await page.locator('.canvas-workspace').waitFor()
+ const fresh=await page.evaluate(async()=>{const {supabase}=await import('/src/hosted/client.ts');return (await supabase.from('organizers').select('content').single()).data.content})
+ assert.equal(fresh.nodes.length,2);assert.equal(fresh.nodes.some(node=>node.name==='Websites'),false)
+ const backup=await page.evaluate(async()=>{const {createLocalRepository}=await import('/src/storage/indexedDb.ts'),{encodeBackup}=await import('/src/storage/backup.ts');const repo=createLocalRepository(),state=await repo.load();repo.close();return encodeBackup(state)})
+ step('manual backup import');await page.getByLabel('Import organizer backup',{exact:true}).setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(backup)})
+ await page.getByRole('button',{name:'Replace organizer',exact:true}).click()
+ await page.getByRole('status').filter({hasText:'Saved to your account'}).waitFor()
  assert.equal(await page.locator('.canvas-error').count(),0)
  step('round trip');const loaded=await page.evaluate(async owner=>{
   const {supabase}=await import('/src/hosted/client.ts'),{createHostedRepository}=await import('/src/hosted/repository.ts');const repo=createHostedRepository(supabase,owner),state=await repo.load();repo.close()
   return {...state,attachments:await Promise.all(state.attachments.map(async({blob,...file})=>({...file,text:await blob.text()})))}
  },users[0].id)
- assert.deepEqual({...loaded,attachments:[]},{...original,attachments:[]});assert.equal(loaded.attachments[0].text,'hello')
+ assert.deepEqual({...loaded,attachments:[]},{...original,revision:loaded.revision,attachments:[]});assert.equal(loaded.attachments[0].text,'hello')
  step('save/reload');await page.getByRole('textbox',{name:'Ask Kirayana',exact:true}).fill('/space Cloud Space');await page.getByRole('button',{name:'Send prompt',exact:true}).click();await page.getByRole('button',{name:'Confirm action',exact:true}).click()
  await page.waitForFunction(async()=>{const {supabase}=await import('/src/hosted/client.ts');const {data}=await supabase.from('organizers').select('content').single();return data?.content.nodes.some(n=>n.name==='Cloud Space')})
  await page.getByRole('status').filter({hasText:'Saved to your account'}).waitFor();await page.waitForFunction(()=>new Promise(resolve=>{const r=indexedDB.open('kirayana-hosted-recovery',1);r.onsuccess=()=>{const db=r.result,q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>{db.close();resolve(q.result.length===0)}}}));await page.reload();await page.locator('.canvas-workspace').waitFor();assert.equal(await page.getByRole('heading',{name:'Recover unsaved work'}).count(),0)
  step('profile');await page.getByRole('button',{name:'Your account',exact:true}).click();await page.getByRole('button',{name:'Edit profile',exact:true}).click();await page.getByLabel('Full name',{exact:true}).fill('Hosted Profile');await page.getByRole('button',{name:'Save profile',exact:true}).click()
- step('account switch');await logout();await signIn(users[1]);await page.getByRole('heading',{name:'Your new canvas',exact:true}).waitFor();assert.equal(await page.locator('.canvas-workspace').count(),0)
+ step('account switch');await logout();await signIn(users[1]);await page.locator('.canvas-workspace').waitFor()
  const isolation=await page.evaluate(async owner=>{const {supabase}=await import('/src/hosted/client.ts');const read=await supabase.from('organizers').select('*').eq('owner_id',owner);const spoof=await supabase.rpc('save_organizer',{p_owner:owner,p_expected_version:0,p_operation:crypto.randomUUID(),p_content:{},p_layout:{},p_revision:0});return {rows:read.data?.length,error:spoof.error?.message}},users[0].id)
  assert.equal(isolation.rows,0);assert.match(isolation.error,/ownership/)
- await page.getByRole('button',{name:'Start a blank canvas',exact:true}).click();await page.locator('.canvas-workspace').waitFor();await logout();await signIn(users[0]);await page.locator('.canvas-workspace').waitFor()
+ await logout();await signIn(users[0]);await page.locator('.canvas-workspace').waitFor()
  step('repository conflicts and retries');const checks=await page.evaluate(async({owner,other})=>{
   const {supabase}=await import('/src/hosted/client.ts'),{createHostedRepository}=await import('/src/hosted/repository.ts')
   console.log('repo: load two snapshots');const first=createHostedRepository(supabase,owner),second=createHostedRepository(supabase,owner),a=await first.load(),b=await second.load();console.log('repo: save first');a.nodes[0].color='#41c7ae';a.revision++;await first.save(a)
