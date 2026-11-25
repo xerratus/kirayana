@@ -424,9 +424,10 @@ export function CanvasWorkspace({ state, change, storageStatus, storageError }: 
       const main = v.node.id === root.id, depth = v.depth
       ctx.globalAlpha = main ? 1 : v.progress
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#edf5ff'; ctx.font = `${main ? 700 : 650} ${Math.max(9, (main ? 17 : 15) * camera.zoom * depth)}px sans-serif`
-      ctx.fillText(v.node.name, v.point.x, v.point.y + (groupLabels.get(v.node.id)?.title ?? v.radius + 28 * camera.zoom * depth))
+      const label=v.node.kind==='user' ? 'You' : v.node.name
+      ctx.fillText(label, v.point.x, v.point.y + (groupLabels.get(v.node.id)?.title ?? v.radius + 28 * camera.zoom * depth))
       ctx.fillStyle = '#9bb0cb'; ctx.font = `${Math.max(8, (main ? 10.5 : 12) * camera.zoom * depth)}px sans-serif`
-      ctx.fillText(main ? (root.kind === 'user' ? 'Your organizer' : 'Space') : v.node.kind === 'skills' ? 'Personalize your experience' : kindLabel(v.node), v.point.x, v.point.y + (groupLabels.get(v.node.id)?.subtitle ?? v.radius + (main ? 50 : 49) * camera.zoom * depth))
+      ctx.fillText(v.node.kind==='user' ? (v.node.name==='You' ? 'John McGuinness' : v.node.name) : main ? 'Space' : v.node.kind === 'skills' ? 'Personalize your experience' : kindLabel(v.node), v.point.x, v.point.y + (groupLabels.get(v.node.id)?.subtitle ?? v.radius + (main ? 50 : 49) * camera.zoom * depth))
       ctx.globalAlpha = 1
     }
     for (const orb of fanOrbs) {
